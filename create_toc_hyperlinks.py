@@ -102,16 +102,19 @@ def create_hyperlinks(frame,prefix):
     y_pos = frame_pos[1]+OFFSET
     scribus.setActiveLayer("Hyperlinks")
     links = []
+
+    filename = scribus.getDocName()
+    if "_UD_" in filename or "_SE_" in filename:
+        hyperlink_width = UD_SE_FRAME_WIDTH
+    else:
+        hyperlink_width = FRAME_WIDTH
     while i < len(pages):
         if i == half:
             x_pos = 109
             y_pos = frame_pos[1]+OFFSET # reset y coord for right column
         
         frame_name = prefix+str(i+1)
-        if "_UD_" or "_SE_" in scribus.getDocName():
-            scribus.createText(x_pos,y_pos,UD_SE_FRAME_WIDTH,FRAME_HEIGHT,frame_name)
-        else:
-            scribus.createText(x_pos,y_pos,FRAME_WIDTH,FRAME_HEIGHT,frame_name)
+        scribus.createText(x_pos,y_pos,hyperlink_width,FRAME_HEIGHT,frame_name)
         scribus.setLinkAnnotation(int(pages[i]),0,0,frame_name)
         # scribus.lockObject(frame_name)
         links.append(frame_name)
