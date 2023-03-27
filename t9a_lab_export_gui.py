@@ -96,7 +96,7 @@ def export_menu():
         if norules.get():
             formats.append("norules")
 
-        if len(formats) > 0 and len(qualities) > 0:
+        if formats and qualities:
             options = {"formats":formats,"qualities":qualities}
             root.destroy()
         else:
@@ -112,16 +112,14 @@ def main():
 
     if options:
         args = ["scribus","--quality"]
-        for arg in options['qualities']:
-            args.append(arg)
+        args.extend(iter(options['qualities']))
         args.append("--formats")
-        for arg in options['formats']:
-            args.append(arg)
+        args.extend(iter(options['formats']))
         print(args)
         # t9a_export_pdfs.main_wrapper(args)
         t9a_export_pdfs.export_pdfs(options['formats'], options['qualities'])
 
-        # scribus.messageBox("Options",f"Selected options: {str(options)}")
+                # scribus.messageBox("Options",f"Selected options: {str(options)}")
 
     else:
         sys.exit()

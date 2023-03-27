@@ -8,7 +8,6 @@ try:
 except ImportError:
     print("Unable to import the 'scribus' module. This script will only run within")
     print("the Python interpreter embedded in Scribus. Try Script->Execute Script.")
-    import scribusDummy as scribus
     sys.exit(1)
 
 from t9a_scribus import ScribusLAB

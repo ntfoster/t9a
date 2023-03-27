@@ -41,7 +41,7 @@ def main():
 
     tools_column = [
         [sg.Text("Embedded Rules PDF:")],
-        [sg.Text(size=(60,1),key="-RULES-",expand_x=True)],
+        [sg.Text(size=(80,1),key="-RULES-",expand_x=True)],
         [
             sg.Text("Rules version:"),
             sg.Text(key="-OLD-VERSION-")
@@ -94,7 +94,7 @@ def main():
     def load_file(filename):
         lab = LABfile(filename)
         try:
-            window["-OPEN-SCRIBUS-"].update(disabled=False)
+            # window["-OPEN-SCRIBUS-"].update(disabled=False)
             window["-OPEN-OLD-RULES-"].update(disabled=False)
             window["-RULES-"].update("...")
             rules_pdf = lab.get_embedded_rules()
