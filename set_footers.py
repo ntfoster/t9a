@@ -14,60 +14,20 @@ except ImportError as err:
     sys.exit(1)
 
 
-import xml.etree.ElementTree as ET
+from t9a_sla import LABfile
 
 FOOTER_X_POS = 20
 FOOTER_Y_POS = 285.5
 FOOTER_WIDTH = 70
 FOOTER_HEIGHT = 7
 
+# Unique mesasurements for certain books
 UD_FOOTER_X_POS_ODD = 115.5
 UD_FOOTER_X_POS_EVEN = 23
 UD_FOOTER_Y_POS = 282.58
 
 SE_FOOTER_X_POS = 20
 SE_FOOTER_Y_POS = 280.84
-
-def parse_headers(style): # scans for 'HEADER Level 1' text to build bookmarks
-    header_labels = []
-    # for object in root.findall("./DOCUMENT/PAGEOBJECT/StoryText/DefaultStyle[@PARENT='HEADER Level 1']"):
-    for element in root.findall(f"./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
-        page = int(element.get("OwnPage"))+1 # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers 
-        for storytext in element:
-            if page > 7:
-                is_header = False
-                for child in storytext:
-                    if child.tag == "DefaultStyle":
-                        if str(child.get("PARENT")).lower() == style.lower():
-                            is_header = True
-                    if is_header:
-                        if child.tag == "MARK":
-                            label = child.get("label")
-                            entry = {"label":label, "text":"", "page":page}
-                            header_labels.append(entry)
-                        if child.tag == "ITEXT":
-                            text = child.get("CH")
-                            entry = {"label":"", "text":text, "page":page}
-                            header_labels.append(entry)
-    # print(header_labels)
-    return header_labels
-
-def lookup_labels(labels):
-    marks = root.find("./DOCUMENT/Marks")
-    for entry in labels:
-        if entry["label"] != "":
-            entry["text"] = entry["label"]
-            for mark in marks:
-                if mark.get("label") == entry["label"]:
-                    entry["text"] = mark.get("str")
-
-            
-    return labels
-
-def get_rules_pages():
-    rules_start = scribus.getAllText("rules_start")
-    rules_end = scribus.getAllText("rules_end")
-    return (int(rules_start),int(rules_end))
 
 def create_footer(page, footer):
     scribus.gotoPage(page)
@@ -116,64 +76,31 @@ def create_footer_SE(page, footer):
         return
 
 def main(argv):
-    """This is a documentation string. Write a description of what your code
-    does here. You should generally put documentation strings ("docstrings")
-    on all your Python functions."""
-
-    global root
-    file = scribus.getDocName()
-    tree = ET.parse(file)
-    root = tree.getroot()
-
-    background_headers = parse_headers("HEADER Level 1")
-    rules_headers = parse_headers("HEADER Rules")
+    lab = LABfile(scribus.getDocName())
+    background_headers = lab.parse_headers("HEADER Level 1")
+    rules_headers = lab.parse_headers("HEADER Rules")
     headers = background_headers + rules_headers
-    labels = lookup_labels(headers)
-
-    newlist = sorted(labels, key=lambda k: k['page'])
-
-
     pages = range(8,scribus.pageCount())
-    # rules_pages = get_rules_pages()
-    # pages = range(rules_pages[0],rules_pages[1])
 
-    footer = ""
-    # scribus.messageBox("Results",str(newlist))
-    
     scribus.setUnit(scribus.UNIT_MM)
+
+    current_layer = scribus.getActiveLayer()
+    current_header = ""
     for page in pages:
         # don't create footer on page with "blank" master
         if scribus.getMasterPage(page).startswith("X"): continue
 
-        # header = next((item for item in newlist if item["page"] == page), None)
-        header = None
-        for x in newlist:
+        for x in headers:
             if x["page"] == page:
-                header = x
-        if header:
-            footer = header["text"]
+                current_header = x["text"]
         scribus.setActiveLayer("Hyperlinks")
         if "_UD_" in scribus.getDocName():
-            create_footer_UD(page, footer)
+            create_footer_UD(page, current_header)
         elif "_SE_" in scribus.getDocName():
-            create_footer_SE(page, footer)
+            create_footer_SE(page, current_header)
         else:
-            create_footer(page,footer)
-
-    # pages = range(rules_pages[0],rules_pages[1]+1)
-    # header = ''
-    # # pages = [rules_pages[0]]
-    # for page in pages:
-    #     scribus.gotoPage(page)
-    #     items = scribus.getPageItems()
-    #     for item in items:
-    #             if item[1] == 4:
-    #                 if scribus.getParagraphStyle(item[0]) == 'HEADER Rules':
-    #                     header = scribus.getAllText(item[0])
-    #     scribus.setActiveLayer("Hyperlinks")
-    #     label = scribus.createText(20,288,70,7)
-    #     scribus.setText(header,label)
-    #     scribus.setStyle("FOOTER - Left", label)
+            create_footer(page,current_header)
+    scribus.setActiveLayer(current_layer)
 
 def main_wrapper(argv):
     """The main_wrapper() function disables redrawing, sets a sensible generic

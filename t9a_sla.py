@@ -1,7 +1,13 @@
+"""Contains methods for interacting with the .sla file for a 9th Age book"""
+
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 VERSION_FRAME = "version_number"
+
+
+class InvalidMarkException(Exception):
+    pass
 
 class LABfile:
     def __init__(self, filename):
@@ -77,3 +83,54 @@ class LABfile:
         if element.get("PFILE")[-4:] == ".pdf":
             return sla_dir / Path(element.get("PFILE"))
 
+    def parse_headers(self,style):
+        """Scans file for text frames with given style applied and returns a list of entries with label, text, and page
+        
+        Args:
+            style (string): Name of text style to scan for
+        Returns:
+            list: A list of {text:string, page:int} dictionaries
+        """        
+
+        entries = []
+        for element in self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
+            page = int(element.get("OwnPage"))+1 # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers 
+            for storytext in element:
+                if page > 7: # after Contents page
+                    is_header = False
+                    for child in storytext:
+                        if (
+                            child.tag == "DefaultStyle"
+                            and str(child.get("PARENT")).lower() == style.lower()
+                        ):
+                            is_header = True
+                        if is_header:
+                            text = None
+                            if child.tag == "MARK":
+                                label = child.get("label")
+                                text = self.lookup_label(label)
+                            elif child.tag == "ITEXT":
+                                text = child.get("CH")
+                            if text: 
+                                entry = {"text": text, "page": page}
+                                entries.append(entry)
+        return sorted(entries, key=lambda k: k['page'])
+
+    def lookup_labels(self,labels):
+        marks = self.root.find("./DOCUMENT/Marks")
+        for entry in labels:
+            if entry["label"] != "":
+                entry["text"] = entry["label"]
+                for mark in marks:
+                    if mark.get("type") == "3" and mark.get("label") == entry["label"]:
+                        entry["text"] = mark.get("str")
+
+        return labels
+    
+
+    def lookup_label(self,label):
+        marks = self.root.find("./DOCUMENT/Marks")
+        for mark in marks:
+            if mark.get("type") == "3" and mark.get("label") == label:
+                return mark.get("str")
+        raise InvalidMarkException(f"{label} is not a valid Mark")

@@ -16,87 +16,27 @@ except ImportError as err:
 #########################
 # YOUR IMPORTS GO HERE  #
 #########################
+from t9a_sla import LABfile
 
-import xml.etree.ElementTree as ET
-
-def parse_headers(style): # scans for 'HEADER Level 1' text to build bookmarks
-    header_labels = []
-    # for object in root.findall("./DOCUMENT/PAGEOBJECT/StoryText/DefaultStyle[@PARENT='HEADER Level 1']"):
-    for element in root.findall(f"./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
-        page = int(element.get("OwnPage"))+1 # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers 
-        for storytext in element:
-            if page > 7:
-                is_header = False
-                for child in storytext:
-                    if child.tag == "DefaultStyle":
-                        if str(child.get("PARENT")).lower() == style.lower():
-                            is_header = True
-                    if is_header:
-                        if child.tag == "MARK":
-                            label = child.get("label")
-                            entry = {"label":label, "text":"", "page":page}
-                            header_labels.append(entry)
-                        if child.tag == "ITEXT":
-                            text = child.get("CH")
-                            entry = {"label":"", "text":text, "page":page}
-                            header_labels.append(entry)
-    # print(header_labels)
-    return header_labels
-
-def lookup_labels(labels):
-    marks = root.find("./DOCUMENT/Marks")
-    for entry in labels:
-        if entry["label"] != "":
-            entry["text"] = entry["label"]
-            for mark in marks:
-                if mark.get("type") == "3" and mark.get("label") == entry["label"]:
-                    entry["text"] = mark.get("str")
-
-            
-    return labels
+def set_toc_frame(frame,headers,style):
+    text = ""
+    for entry in headers:
+        line = f'{entry["text"]}\t{entry["page"]}\n'
+        text += line
+    scribus.setText(text,frame)
+    try:
+        scribus.setParagraphStyle(style,frame)
+    except scribus.NotFoundError:
+        scribus.setParagraphStyle("TOC level 1", frame)
 
 def main(argv):
-    """This is a documentation string. Write a description of what your code
-    does here. You should generally put documentation strings ("docstrings")
-    on all your Python functions."""
-    #########################
-    #  YOUR CODE GOES HERE  #
-    #########################
-    global root
-    file = scribus.getDocName()
-    tree = ET.parse(file)
-    root = tree.getroot()
+    lab = LABfile(scribus.getDocName())
+    
+    background_headers = lab.parse_headers("HEADER Level 1")
+    set_toc_frame("TOC_Background",background_headers,"TOC1")
 
-    background_headers = parse_headers("HEADER Level 1")
-
-    background_labels = lookup_labels(background_headers)
-
-    newlist = sorted(background_labels, key=lambda k: k['page'])
-    text = newlist
-
-    toc_background = ""
-    for entry in text:
-        line = f'{entry["text"]}\t{entry["page"]}\n'
-        toc_background += line
-    scribus.setText(toc_background,"TOC_Background")
-    try:
-        scribus.setParagraphStyle("TOC1","TOC_Background")
-    except scribus.NotFoundError:
-        scribus.setParagraphStyle("TOC level 1", "TOC_Background")
-
-
-    rules_headers = parse_headers("HEADER Rules")
-    rules_labels = lookup_labels(rules_headers)
-
-    newlist = sorted(rules_labels, key=lambda k: k['page'])
-    text = newlist
-
-    toc_rules = ""
-    for entry in text:
-        line = f'{entry["text"]}\t{entry["page"]}\n'
-        toc_rules += line
-    scribus.setText(toc_rules,"TOC_Rules")
-    scribus.setParagraphStyle("TOC Rules","TOC_Rules")
+    rules_headers = lab.parse_headers("HEADER Rules")
+    set_toc_frame("TOC_Rules",rules_headers,"TOC Rules")
 
 def main_wrapper(argv):
     """The main_wrapper() function disables redrawing, sets a sensible generic
