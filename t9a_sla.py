@@ -83,11 +83,11 @@ class LABfile:
         if element.get("PFILE")[-4:] == ".pdf":
             return sla_dir / Path(element.get("PFILE"))
 
-    def parse_headers(self,style):
+    def parse_headers(self,styles):
         """Scans file for text frames with given style applied and returns a list of entries with label, text, and page
         
         Args:
-            style (string): Name of text style to scan for
+            styles (string): A list of text styles to scan for
         Returns:
             list: A list of {text:string, page:int} dictionaries
         """        
@@ -101,7 +101,7 @@ class LABfile:
                     for child in storytext:
                         if (
                             child.tag == "DefaultStyle"
-                            and str(child.get("PARENT")).lower() == style.lower()
+                            and str(child.get("PARENT")).lower() in [x.lower() for x in styles]
                         ):
                             is_header = True
                         if is_header:

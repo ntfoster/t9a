@@ -32,10 +32,10 @@ def set_toc_frame(frame,headers,style):
 def main(argv):
     lab = LABfile(scribus.getDocName())
     
-    background_headers = lab.parse_headers("HEADER Level 1")
+    background_headers = lab.parse_headers(["HEADER Level 1","HEADER Level 2"])
     set_toc_frame("TOC_Background",background_headers,"TOC1")
 
-    rules_headers = lab.parse_headers("HEADER Rules")
+    rules_headers = lab.parse_headers(["HEADER Rules"])
     set_toc_frame("TOC_Rules",rules_headers,"TOC Rules")
 
 def main_wrapper(argv):
