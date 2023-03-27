@@ -77,8 +77,8 @@ def create_footer_SE(page, footer):
 
 def main(argv):
     lab = LABfile(scribus.getDocName())
-    background_headers = lab.parse_headers("HEADER Level 1")
-    rules_headers = lab.parse_headers("HEADER Rules")
+    background_headers = lab.parse_headers(["HEADER Level 1"])
+    rules_headers = lab.parse_headers(["HEADER Rules"])
     headers = background_headers + rules_headers
     pages = range(8,scribus.pageCount())
 
