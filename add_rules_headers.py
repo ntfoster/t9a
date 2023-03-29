@@ -15,6 +15,7 @@ import json
 # from get_rules_toc import get_titles
 from t9a_sla import LABfile
 from pathlib import Path
+import os
 import subprocess
 
 rules_start = int(scribus.getText('rules_start'))
@@ -61,11 +62,19 @@ def main(argv):
     pdf_file = Path(lab.get_embedded_rules())
     json_file = pdf_file.parent.parent / Path(pdf_file.name).with_suffix('.json')
     if not Path(json_file).is_file():
-        subprocess.run(f"python t9a_pdf.py '{pdf_file}'")
+        script_name = "t9a_pdf.py"
+        script_path = Path(__file__).parents[0] / script_name
+        print(script_path)
+        current_env = os.environ.copy()
+        current_env['PYTHONPATH'] = "" # need to clear out Scribus' pythonpath before calling subprocess to avoid import errors
+        subprocess.run(f'python3 "{script_path}" "{pdf_file}"',shell=True,env=current_env)
+        # os.system(f'python3 "{script_path}" "{pdf_file}"')
+        # subprocess.run(["python3","--version"],shell=True)
     try:
         titles = load_titles_from_json(json_file)
     except:
         scribus.messageBox("Titles not found",f"The file {json_file} could not be found. Please make sure you have the py_pdf_parser module installed and can run t9a_pdf.py manually.")
+        return
     remove_rules_headers()
     add_rules_headers(titles)
 
