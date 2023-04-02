@@ -18,13 +18,9 @@ from pathlib import Path
 import os
 import subprocess
 
-rules_start = int(scribus.getText('rules_start'))
-rules_end = int(scribus.getText("rules_end"))
-scribus.setActiveLayer('Notes')
-scribus.setUnit(scribus.UNIT_POINTS)
 
 
-def remove_rules_headers():
+def remove_rules_headers(rules_start,rules_end):
     scribus.setActiveLayer('Notes')
     page = rules_start-1
     scribus.setRedraw(False)
@@ -40,7 +36,7 @@ def remove_rules_headers():
 
     scribus.setRedraw(True)
 
-def add_rules_headers(titles):
+def add_rules_headers(titles,rules_start):
     scribus.setActiveLayer('Notes')
     for title in titles:
         page_number = title['page']+rules_start-2
@@ -55,7 +51,13 @@ def load_titles_from_json(filename):
         titles = json.load(json_file)
         return titles
         
-def main(argv):
+def set_rules_headers():
+
+    rules_start = int(scribus.getText('rules_start'))
+    rules_end = int(scribus.getText("rules_end"))
+    scribus.setActiveLayer('Notes')
+    scribus.setUnit(scribus.UNIT_POINTS)
+
     # f = open(r"C:\Users\pusht\OneDrive\9th Age\scripts\titles.json")
     # titles = json.load(f)
     lab = LABfile(scribus.getDocName())
@@ -71,13 +73,13 @@ def main(argv):
         # os.system(f'python3 "{script_path}" "{pdf_file}"')
         # subprocess.run(["python3","--version"],shell=True)
     try:
+        print("trying to load titles")
         titles = load_titles_from_json(json_file)
     except:
         scribus.messageBox("Titles not found",f"The file {json_file} could not be found. Please make sure you have the py_pdf_parser module installed and can run t9a_pdf.py manually.")
         return
-    remove_rules_headers()
-    add_rules_headers(titles)
-
+    remove_rules_headers(rules_start, rules_end)
+    add_rules_headers(titles,rules_start)
 
 def main_wrapper(argv):
     """The main_wrapper() function disables redrawing, sets a sensible generic
@@ -87,7 +89,8 @@ def main_wrapper(argv):
     try:
         scribus.statusMessage("Running script...")
         scribus.progressReset()
-        main(argv)
+        # main(argv)
+        set_rules_headers()
     finally:
         # Exit neatly even if the script terminated with an exception,
         # so we leave the progress bar and status bar blank and make sure
