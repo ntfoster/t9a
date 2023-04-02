@@ -125,9 +125,6 @@ def create_hyperlinks(frame,prefix):
     return links
 
 def main(argv):
-    """This is a documentation string. Write a description of what your code
-    does here. You should generally put documentation strings ("docstrings")
-    on all your Python functions."""
     # background_pages = get_toc_pages("TOC")
     # rules_pages = get_toc_pages("TOC2")
     # rename_hyperlinks()

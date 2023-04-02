@@ -1,9 +1,9 @@
+'''Contains functions to analyse Slim Rules PDFs'''
 from py_pdf_parser.loaders import load_file
 import re
 import sys
 import os
 import json
-from tabulate import tabulate
 from pathlib import Path
 
 DEFAULT_FILENAME = r"D:\9th age\Scribus LABs\LAB_ID\images\T9A-FB_2ed_ID_2021_beta4_EN.pdf"
@@ -54,8 +54,8 @@ def match_titles(pdf1, pdf2,details=False):
 def compare_pdfs(pdf1, pdf2,details=False):
     pdf1_titles = get_titles(pdf1,details)
     pdf2_titles = get_titles(pdf2,details)
-    print(tabulate(pdf1_titles, tablefmt="simple"))
-    print(tabulate(pdf2_titles, tablefmt="simple"))
+    print(pdf1_titles, tablefmt="simple")
+    print(pdf2_titles, tablefmt="simple")
     if pdf1_titles == pdf2_titles:
         print("Conents match!")
     else:
@@ -68,26 +68,20 @@ def get_version_from_PDF(pdf):
     # t9a-fb_2ed_wdg_2021_en.pdf
     # t9a_fb_2ed_id_2022_beta_1_hotfix_2_en.pdf
     # pdf_pattern = r"t9a-fb_2ed_[a-zA-Z]+_(\d{4})_?([a-zA-Z]+)?(\d+)?_\w{2}\.pdf"
- 
+
     pdf_pattern = r"t9a[_|-]fb_2ed_[a-zA-Z]+_(\d{4})_?(beta_?\d)?_?(hotfix_?\d)?_\w{2}"
     pdf_re = re.compile(pdf_pattern, re.IGNORECASE)
-    result = pdf_re.match(filename)
-    version_list = []
-    if result:
-        for r in result.groups():
-            if r:
-                version_list.append(r)
-        version = " ".join(version_list)
-        return version
-    else:
-        raise Exception(f"Filename '{filename}' was not in an expected format")
+    if not (result := pdf_re.match(filename)):
+        raise ValueError(f"Filename '{filename}' was not in an expected format")
+    version_list = [r for r in result.groups() if r]
+    return " ".join(version_list)
 
 def main(args):
     if len(args) > 1:
         filename = args[1]
     else:
         valid_file = False
-        while valid_file == False:
+        while not valid_file:
             filename = input("Enter filename of rules PDF to open: ").strip("\"")
             if filename == '':
                 filename = DEFAULT_FILENAME
@@ -96,7 +90,7 @@ def main(args):
                 valid_file = True
             else:
                 print("Filename does not exist")
-    print(tabulate(export_titles(filename),headers="keys",tablefmt="simple"))
+    print(export_titles(filename),headers="keys",tablefmt="simple")
 
 if __name__ == '__main__':
     main(sys.argv)

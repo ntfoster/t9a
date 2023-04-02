@@ -91,7 +91,7 @@ class LABfile:
         Returns:
             list: A list of {text:string, page:int} dictionaries
         """        
-
+        # TODO: Parse styles applied at text-level as well as frame-level.
         entries = []
         for element in self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
             page = int(element.get("OwnPage"))+1 # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers 

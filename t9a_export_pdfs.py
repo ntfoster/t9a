@@ -75,19 +75,21 @@ QUALITY_PRINT = {
     "cropMarks":True
 }
 
-try:
+
+def test_frames():
     missing_frames = []
-    for frame in EXPECTED_FRAMES:
-        try:
-            scribus.selectObject(frame)
-        except:
-            missing_frames.append(frame)
-    scribus.deselectAll()
-    if missing_frames:
-        raise Exception(f"The following expected text frames are missing: {' ,'.join(missing_frames)}")
-except Exception as err:
-    scribus.messageBox("Missing frames", str(err), scribus.ICON_CRITICAL)
-    sys.exit(1)
+    try:
+        scribus.deselectAll()
+        for frame in EXPECTED_FRAMES:
+            try:
+                scribus.selectObject(frame)
+            except scribus.NoValidObjectError:
+                missing_frames.append(frame)
+        if missing_frames:
+            raise scribus.NoValidObjectError(
+                f"The following expected text frames are missing: {' ,'.join(missing_frames)}.")
+    except Exception as err:
+        scribus.messageBox("Missing frames", str(err), scribus.ICON_CRITICAL)
 
 # globals
 quit = False
