@@ -15,7 +15,8 @@ from pathlib import Path
 
 def main(argv):
     if len(argv)==1: # if called from within Scribus or with no arguments
-        new_args = scribus.valueDialog('New PDF', 'Full path to new rules PDF').strip('"')
+        # new_args = scribus.valueDialog('New PDF', 'Full path to new rules PDF').strip('"')
+        new_args = scribus.fileDialog("Select slim rules PDF", "PDF Files (*.pdf)", "", haspreview=True)
         if new_args == '':
             scribus.messageBox("Script Cancelled","Script was cancelled or no arguments were provided")
             return
