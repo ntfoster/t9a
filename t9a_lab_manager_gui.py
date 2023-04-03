@@ -28,7 +28,6 @@ def copy_file(file,directory):
         print("Old file and new file are the same")
     return destination
 
-
 def get_settings():
     if Path(SETTINGS_FILE).is_file():
         with open(SETTINGS_FILE) as json_file:
@@ -40,6 +39,12 @@ def get_settings():
             json.dump(settings, json_file, indent=4)
     return settings
     
+def update_settings_list(settings,list):
+    lab_list = [{"name":entry[0],"filename":entry[1]} for entry in list]
+    settings['labs'] = lab_list
+    with open(SETTINGS_FILE, "w") as json_file:
+        json.dump(settings, json_file, indent=4)
+
 def open_scribus(filename=None):
     if scribus_exe := shutil.which("scribus"):
         subprocess.Popen([scribus_exe,filename])
@@ -49,58 +54,69 @@ def open_scribus(filename=None):
 
 def main():
 
-    def update_settings_list(list):
-        lab_list = [{"name":entry[0],"filename":entry[1]} for entry in list]
-        settings['labs'] = lab_list
-        with open(SETTINGS_FILE, "w") as json_file:
-            json.dump(settings, json_file, indent=4)
-
-
+    sg.ChangeLookAndFeel('DarkBlue14')
     settings = get_settings()
-    labs = settings['labs']
-
-    lab_list = [[lab['name'],lab['filename']] for lab in labs]
+    lab_list = [[lab['name'],lab['filename']] for lab in settings['labs']]
 
     file_list_column = [
         [
-            sg.Table(lab_list, enable_events=True, expand_y=True, key="-FILE-LIST-",headings=["Army","Filename"], auto_size_columns=False,
-                            col_widths=[10,50], justification="left", select_mode=sg.TABLE_SELECT_MODE_BROWSE)
+            sg.Table(lab_list, enable_events=True, expand_x=True, expand_y=True, key="-FILE-LIST-",headings=["Army","Filename"], auto_size_columns=False,
+                            col_widths=[5,40], justification="left", select_mode=sg.TABLE_SELECT_MODE_BROWSE)
         ],
         [
             sg.Button("Add New", key="-ADD-NEW-"),
             sg.Button("Edit selected",key="-EDIT-SELECTED-"),
             sg.Button("Delete selected", key="-DELETE-SELECTED-"),
+            sg.Button("Open in Scribus",key="-OPEN-SCRIBUS-",disabled=True),
         ]
     ]
 
     tools_column = [
-        [sg.Text("Embedded Rules PDF:")],
-        [sg.Text(size=(80,1),key="-RULES-",expand_x=True)],
+        # [sg.Text("Embedded Rules PDF:")],
         [
-            sg.Text("Rules version:"),
-            sg.Text(key="-OLD-VERSION-")
+            sg.Frame("Embedded Rules", [
+                [
+                    sg.Text("Filename:", size=10,),
+                    sg.Text(size=(40, 1), key="-RULES-", expand_x=True,
+                            relief=sg.RELIEF_GROOVE, border_width=1)
+                ],
+                [
+                    sg.Text("Version:", size=10,),
+                    sg.Text(size=15, key="-OLD-VERSION-",
+                            relief=sg.RELIEF_GROOVE, border_width=1),
+                    sg.Button("Open PDF", key="-OPEN-OLD-RULES-", disabled=True)
+                ],
+            ])
         ],
+        # [sg.HorizontalSeparator()],
         [
-            sg.Button("Open in Scribus",key="-OPEN-SCRIBUS-",disabled=True),
-            sg.Button("Open Rules PDF",key="-OPEN-OLD-RULES-",disabled=True)
+            sg.Frame("New Rules", [
+                [
+                    sg.Text("Select:",size=10),
+                    sg.FileBrowse(key='-NEW-PDF-', enable_events=True),
+                ],
+                [
+                    # sg.In(size=(60,1), enable_events=True, key="-NEW-PDF-",expand_x=True, readonly=True),
+                    sg.Text("Filename:", size=10,),
+                    sg.Text(size=40, key='-NEW-RULES-',
+                            relief=sg.RELIEF_GROOVE, border_width=1),
+                ],
+                [
+                    sg.Text("Version:", size=10),
+                    sg.Text(size=15, key='-NEW-VERSION-',
+                            relief=sg.RELIEF_GROOVE, border_width=1),
+                    sg.Button("Open PDF", key="-OPEN-NEW-RULES-", disabled=True),
+                ],
+            ])
         ],
-        [sg.HorizontalSeparator()],
-
-        [sg.Text("Replace PDF\n---\nChoose new rules PDF")],
+        # [sg.HorizontalSeparator()],
         [
-            sg.In(size=(20,1), enable_events=True, key="-NEW-PDF-",expand_x=True, readonly=True),
-            sg.FileBrowse()
-        ],
-        [
-            sg.Text("Rules version:"),
-            sg.InputText('No file selected ', justification='left',text_color='black', background_color='white', key='-NEW-VERSION-')
-            # sg.Text(key="-NEW-VERSION-")
-        ],
-        [
-            sg.Button("Replace",key="-REPLACE-",disabled=True,button_color="red"),
-            sg.Button("Open Rules PDF",key="-OPEN-NEW-RULES-",disabled=True),
-            sg.Button("Compare",key="-COMPARE-",disabled=True),
-            sg.Text(key="-RESULT-")
+            sg.Button("Compare", key="-COMPARE-", disabled=True),
+            sg.Text("Result:"),
+            sg.Text(size=10, key="-RESULT-", relief=sg.RELIEF_GROOVE,
+                    border_width=1, expand_x=True),
+            sg.Button("Replace", key="-REPLACE-",
+                      disabled=True, button_color="red",),
         ],
 
     ]
@@ -108,19 +124,18 @@ def main():
 
     # Full layout
     layout = [
-        [
-            sg.Text("LAB .sla file"),
-            sg.In(size=(60,1), enable_events=True, key="-FILE-",expand_x=True, readonly=True),
-            sg.FileBrowse()
-        ],
+        # [
+        #     sg.Text("LAB .sla file"),
+        #     sg.In(size=(60,1), enable_events=True, key="-FILE-",expand_x=True, readonly=True),
+        #     sg.FileBrowse(file_types=(("SLA Files", "*.sla"),))
+        # ],
 
         [
-            sg.Col(file_list_column, vertical_alignment="top",expand_y=True),
+            sg.Col(file_list_column, vertical_alignment="top",expand_x=True, expand_y=True,),
             sg.Col(tools_column, vertical_alignment="top")
         ]
     ]
 
-    sg.ChangeLookAndFeel('DarkBlue')
     window = sg.Window("T9A LAB Details", layout, resizable=True, icon=T9A_ICON, titlebar_icon=T9A_ICON)
     filename = None
     new_pdf = None
@@ -129,13 +144,13 @@ def main():
     def add_file():
         add_edit_layout = [
             [
-                sg.Text("Army"),
-                sg.In(size=(10, 1), key="-NEW-NAME-"),
+                sg.Text("Army",size=10),
+                sg.In(size=(20, 1), key="-NEW-NAME-"),
             ],
             [
-                sg.Text("Filename"),
-                sg.In(size=(60, 1), key="-NEW-FILE-"),
-                sg.FileBrowse()
+                sg.Text("Filename",size=10),
+                sg.In(size=(40, 1), key="-NEW-FILE-"),
+                sg.FileBrowse(file_types=(("SLA Files", "*.sla"),))
             ],
             [
                 sg.Button('OK', key="-SUBMIT-"),
@@ -152,13 +167,13 @@ def main():
     def edit_file(entry):
         add_edit_layout = [
             [
-                sg.Text("Army"),
-                sg.In(size=(10, 1), key="-NEW-NAME-"),
+                sg.Text("Army",size=10),
+                sg.In(size=(20, 1), key="-NEW-NAME-"),
             ],
             [
-                sg.Text("Filename"),
+                sg.Text("Filename",size=10),
                 sg.In(size=(60, 1), key="-NEW-FILE-"),
-                sg.FileBrowse()
+                sg.FileBrowse(file_types=(("SLA Files", "*.sla"),))
             ],
             [
                 sg.Button('OK', key="-SUBMIT-"),
@@ -207,15 +222,16 @@ def main():
             if values[event]:
                 data_selected = [lab_list[row] for row in values[event]]
                 # filename = values['-FILE-LIST-'][0][1]
-                filename = data_selected[0][1]
-                if Path(filename).is_file():
-                    window["-FILE-"].update(filename)
-                    lab = load_file(filename)
-                else:
-                    disable_load()
+                if filename := data_selected[0][1]:
+                    if Path(filename).is_file():
+                        window["-FILE-"].update(filename)
+                        lab = load_file(filename)
+                    else:
+                        disable_load()
 
         elif event == "-NEW-PDF-":
             new_pdf = values["-NEW-PDF-"]
+            window['-NEW-RULES-'].update(new_pdf)
             try:
                 new_rules_version = get_version_from_PDF(new_pdf)
             except:
@@ -273,7 +289,7 @@ def main():
             new_file = add_file()
             lab_list.append(new_file)
             window['-FILE-LIST-'].update(lab_list)
-            update_settings_list(lab_list)
+            update_settings_list(settings,lab_list)
         elif event == "-EDIT-SELECTED-":
             selected_row = values["-FILE-LIST-"][0]
             data_selected = lab_list[selected_row]
@@ -281,12 +297,12 @@ def main():
             new_file = edit_file(data_selected)
             lab_list[selected_row] = new_file
             window['-FILE-LIST-'].update(lab_list)
-            update_settings_list(lab_list)
+            update_settings_list(settings,lab_list)
         elif event == "-DELETE-SELECTED-":
             selected_row = values["-FILE-LIST-"][0]
             lab_list.pop(selected_row)
             window['-FILE-LIST-'].update(lab_list)
-            update_settings_list(lab_list)
+            update_settings_list(settings,lab_list)
         elif event == "-OPEN-SCRIBUS-":
             filename = values["-FILE-"]
             print(f"opening {filename} in Scribus")
