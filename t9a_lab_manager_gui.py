@@ -9,11 +9,15 @@ import json
 import os.path
 from pathlib import Path
 import shutil
+import subprocess
 
 async def compare_rules(pdf1, pdf2):
     return await asyncio.run(match_titles(pdf1, pdf2))
 
-SETTINGS_FILE = 'settings.json'
+SETTINGS_FILE = 't9a_lab_manager_settings.json'
+CURRENT_LABS = ["ID", "WDG", "DL", "UD", "SE"]
+
+from t9a_base64 import t9a_icon_base64 as T9A_ICON
 
 def copy_file(file,directory):
     destination = directory+'/'+os.path.basename(file)
@@ -25,17 +29,47 @@ def copy_file(file,directory):
     return destination
 
 
+def get_settings():
+    if Path(SETTINGS_FILE).is_file():
+        with open(SETTINGS_FILE) as json_file:
+            return json.load(json_file)
+    else:
+        entries = [{"name":lab,"filename":None} for lab in CURRENT_LABS ]
+        settings = {"labs":entries}
+        with open(SETTINGS_FILE,"w") as json_file:
+            json.dump(settings, json_file, indent=4)
+    return settings
+    
+def open_scribus(filename=None):
+    if scribus_exe := shutil.which("scribus"):
+        subprocess.Popen([scribus_exe,filename])
+    else:
+        sg.popup_ok("Couldn't launch Scribus. Is it installed and is the scribus executable on your PATH?",
+                       title="Couldn't launch Scribus")
+
 def main():
 
-    with open(SETTINGS_FILE) as json_file:
-        settings = json.load(json_file)    
-        LABS = settings['labs']
+    def update_settings_list(list):
+        lab_list = [{"name":entry[0],"filename":entry[1]} for entry in list]
+        settings['labs'] = lab_list
+        with open(SETTINGS_FILE, "w") as json_file:
+            json.dump(settings, json_file, indent=4)
+
+
+    settings = get_settings()
+    labs = settings['labs']
+
+    lab_list = [[lab['name'],lab['filename']] for lab in labs]
 
     file_list_column = [
         [
-            # sg.Listbox(LABS, size=(60,6), auto_size_text=True, enable_events=True, select_mode="LISTBOX_SELECT_MODE_SINGLE", expand_y=True, key="-FILE-LIST-"),
-            sg.Table(LABS, enable_events=True, expand_y=True, key="-FILE-LIST-",headings=["Army","Filename"], auto_size_columns=False,
-                            col_widths=[5,50], justification="left", select_mode=sg.TABLE_SELECT_MODE_BROWSE)
+            sg.Table(lab_list, enable_events=True, expand_y=True, key="-FILE-LIST-",headings=["Army","Filename"], auto_size_columns=False,
+                            col_widths=[10,50], justification="left", select_mode=sg.TABLE_SELECT_MODE_BROWSE)
+        ],
+        [
+            sg.Button("Add New", key="-ADD-NEW-"),
+            sg.Button("Edit selected",key="-EDIT-SELECTED-"),
+            sg.Button("Delete selected", key="-DELETE-SELECTED-"),
         ]
     ]
 
@@ -86,15 +120,64 @@ def main():
         ]
     ]
 
-    sg.ChangeLookAndFeel('DarkPurple')
-    window = sg.Window("T9A LAB Details", layout, resizable=True)
+    sg.ChangeLookAndFeel('DarkBlue')
+    window = sg.Window("T9A LAB Details", layout, resizable=True, icon=T9A_ICON, titlebar_icon=T9A_ICON)
     filename = None
     new_pdf = None
+
+
+    def add_file():
+        add_edit_layout = [
+            [
+                sg.Text("Army"),
+                sg.In(size=(10, 1), key="-NEW-NAME-"),
+            ],
+            [
+                sg.Text("Filename"),
+                sg.In(size=(60, 1), key="-NEW-FILE-"),
+                sg.FileBrowse()
+            ],
+            [
+                sg.Button('OK', key="-SUBMIT-"),
+            ]
+        ]
+        window = sg.Window(
+            "Add New File", add_edit_layout, use_default_focus=False, finalize=True, modal=True)
+        event, values = window.read()
+        if values:
+            result = [values['-NEW-NAME-'], values['-NEW-FILE-']]
+            window.close()
+            return result
+
+    def edit_file(entry):
+        add_edit_layout = [
+            [
+                sg.Text("Army"),
+                sg.In(size=(10, 1), key="-NEW-NAME-"),
+            ],
+            [
+                sg.Text("Filename"),
+                sg.In(size=(60, 1), key="-NEW-FILE-"),
+                sg.FileBrowse()
+            ],
+            [
+                sg.Button('OK', key="-SUBMIT-"),
+            ]
+        ]
+        window = sg.Window(
+            "Edit File", add_edit_layout, use_default_focus=False, finalize=True, modal=True)
+        window['-NEW-NAME-'].update(entry[0])
+        window['-NEW-FILE-'].update(entry[1])
+        event, values = window.read()
+        if values:
+            result = [values['-NEW-NAME-'],values['-NEW-FILE-']]
+            window.close()
+            return result
 
     def load_file(filename):
         lab = LABfile(filename)
         try:
-            # window["-OPEN-SCRIBUS-"].update(disabled=False)
+            window["-OPEN-SCRIBUS-"].update(disabled=False)
             window["-OPEN-OLD-RULES-"].update(disabled=False)
             window["-RULES-"].update("...")
             rules_pdf = lab.get_embedded_rules()
@@ -105,22 +188,31 @@ def main():
             window["-RULES-"].update("Error")
         return lab
 
+    def disable_load():
+        window["-OPEN-SCRIBUS-"].update(disabled=True)
+        window["-OPEN-OLD-RULES-"].update(disabled=True)
+        window["-RULES-"].update("")
+        window["-OLD-VERSION-"].update("")
 
     while True:
         event, values = window.read()
+        # TODO: change to match->case switch statement
         if event in ["Exit", sg.WIN_CLOSED]:
             break
 
-        # Folder name was filled in, make a list of files in the folder
         if event == "-FILE-":
             filename = values["-FILE-"]
             lab = load_file(filename)
         elif event == "-FILE-LIST-":
-            data_selected = [LABS[row] for row in values[event]]
-            # filename = values['-FILE-LIST-'][0][1]
-            filename = data_selected[0][1]
-            window["-FILE-"].update(filename)
-            lab = load_file(filename)
+            if values[event]:
+                data_selected = [lab_list[row] for row in values[event]]
+                # filename = values['-FILE-LIST-'][0][1]
+                filename = data_selected[0][1]
+                if Path(filename).is_file():
+                    window["-FILE-"].update(filename)
+                    lab = load_file(filename)
+                else:
+                    disable_load()
 
         elif event == "-NEW-PDF-":
             new_pdf = values["-NEW-PDF-"]
@@ -175,8 +267,30 @@ def main():
             subprocess.Popen(window['-RULES-'].get(), shell=True)
         elif event == "-OPEN-NEW-RULES-":
             subprocess.Popen(new_pdf, shell=True)
+        elif event == "-ADD-NEW-":
+            # filename = sg.popup_get_file(
+            #     'Select a .sla file',  title="File selector", file_types=(("SLA Files", "*.sla"),))
+            new_file = add_file()
+            lab_list.append(new_file)
+            window['-FILE-LIST-'].update(lab_list)
+            update_settings_list(lab_list)
+        elif event == "-EDIT-SELECTED-":
+            selected_row = values["-FILE-LIST-"][0]
+            data_selected = lab_list[selected_row]
 
-
+            new_file = edit_file(data_selected)
+            lab_list[selected_row] = new_file
+            window['-FILE-LIST-'].update(lab_list)
+            update_settings_list(lab_list)
+        elif event == "-DELETE-SELECTED-":
+            selected_row = values["-FILE-LIST-"][0]
+            lab_list.pop(selected_row)
+            window['-FILE-LIST-'].update(lab_list)
+            update_settings_list(lab_list)
+        elif event == "-OPEN-SCRIBUS-":
+            filename = values["-FILE-"]
+            print(f"opening {filename} in Scribus")
+            open_scribus(filename)
             # elif event == "-FILE-LIST-": # a file was chosen from the listbox
             #     try:
             #         filename = os.path.join(
