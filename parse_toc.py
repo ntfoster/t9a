@@ -119,12 +119,12 @@ def parse_contents(rules=True):
             label["level"] = label["level"]-1
         labels = custom_labels + labels_background
     else:
-        labels_background = parse_toc(background_toc_frame)
-        background_count = len(labels_background)
-        labels_rules = parse_toc(rules_toc_frame)
-        rules_count = len(labels_rules)
-        background_page = labels_background[0]["page"]
-        rules_page = labels_rules[0]["page"]
+        if labels_background := parse_toc(background_toc_frame):
+            background_count = len(labels_background)
+            background_page = labels_background[0]["page"]
+        if labels_rules := parse_toc(rules_toc_frame):
+            rules_count = len(labels_rules)
+            rules_page = labels_rules[0]["page"]
         labels = custom_labels + [{"level":0, "label":"Background", "page":background_page, "children":background_count}] + labels_background + [{"level":0, "label":"Rules", "page":rules_page, "children":rules_count}] + labels_rules
     return lookup_labels(labels)
 
