@@ -51,7 +51,8 @@ def generate_pdfs(input): # call Scribus to generate PDFs
     format_args = ' '.join(args.formats)
     quality_args = ' '.join(args.quality)
     try:
-        run_command(f'scribus "{input}" --console -py ./t9a_export_pdfs.py --quit --format {format_args} --quality {quality_args}',text=f"Opening {os.path.basename(input)} in Scribus and exporting PDF(s)")
+        run_command(f'scribus "{input}" --no-gui --no-splash -py ./t9a_export_pdfs.py --quit --format {format_args} --quality {quality_args}',
+                    text=f"Opening {os.path.basename(input)} in Scribus and exporting PDF(s)")
     except OSError as err:
         print("Couldn't launch Scribus. Make sure that the scribus executable is in your PATH environment variable")
         sys.exit(1)
