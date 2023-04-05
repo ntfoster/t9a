@@ -116,6 +116,44 @@ class LABfile:
                                 entries.append(entry)
         return sorted(entries, key=lambda k: k['page'])
 
+    def parse_headers_multilevel(self, style_map):
+        """Scans file for text frames with given style applied and returns a list of entries with label, text, and page
+        
+        Args:
+            style_map: A list of (int,string) tuples of TOC level and style name. E.g. [(1,"HEADER Level 1"),(2,"HEADER Level 2")]
+        Returns:
+            list: A list of {"level": int, "text":string, "page":int} dictionaries
+        """
+        # TODO: Parse styles applied at text-level as well as frame-level.
+        entries = []
+        for element in self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
+            # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers
+            page = int(element.get("OwnPage"))+1
+            for storytext in element:
+                if page > 7:  # after Contents page
+                    is_header = False
+                    for child in storytext:
+                        if (
+                            child.tag == "DefaultStyle"
+                            # and str(child.get("PARENT")).lower() in [x[1].lower() for x in style_map]
+                        ):
+                            for style in style_map:
+                                if str(child.get("PARENT")).lower() == style[1].lower():
+                                    is_header = True
+                                    level = style[0]
+                        if is_header:
+                            text = None
+                            if child.tag == "MARK":
+                                label = child.get("label")
+                                text = self.lookup_label(label)
+                            elif child.tag == "ITEXT":
+                                text = child.get("CH")
+                            if text:
+                                entry = {"level":level,"text": text, "page": page}
+                                entries.append(entry)
+        return sorted(entries, key=lambda k: k['page'])
+
+
     def lookup_labels(self,labels):
         marks = self.root.find("./DOCUMENT/Marks")
         for entry in labels:

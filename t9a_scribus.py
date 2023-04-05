@@ -151,26 +151,49 @@ class ScribusLAB:
             self.replace_pdf(nopoints_pdf)
 
 
-    def set_toc_frame(self,frame, headers, style):
+    def set_toc_frame(self,frame, headers, style_map):
         text = ""
+        char_count = 0
+        # if 2 in [h['level'] for h in headers]:
+        #     print("We've got an L2!")
+        header_details = []
+        for i,entry in enumerate(headers):
+            header_detail = (i,char_count,entry['level'],entry['text'],entry['page'])
+            char_count += len(entry['text']) + len(str(entry['page'])) + 2
+            # print(header_detail)
+            header_details.append(header_detail)
+            # print(f"{i}:{entry['level']} - ({len(entry['text'])+len(str(entry['page']))+2}) {entry['text']},{entry['page']}")
+        # selectFrameText(19, 1, "TOC_Background")
+        # setParagraphStyle("TOC level 2", "TOC_Background")
         for entry in headers:
             line = f'{entry["text"]}\t{entry["page"]}\n'
             text += line
         scribus.setText(text, frame)
         scribus.docChanged(True)
         try:
-            scribus.setParagraphStyle(style, frame)
+            scribus.setParagraphStyle(style_map[0][1], frame)
         except scribus.NotFoundError:
-            scribus.setParagraphStyle("TOC level 1", frame)
+            scribus.messageBox("Style Not Found",f"Couldn't find style {style_map[0][1]}")
+        for entry in header_details:
+            if entry[2] > 1:
+                scribus.selectFrameText(entry[1],1,frame)
+                try:
+                    scribus.setParagraphStyle(style_map[entry[2]-1][1], frame)
+                except scribus.NotFoundError:
+                    scribus.messageBox("Style Not Found",
+                                    f"Couldn't find style {style_map[0][1]}")
         scribus.docChanged(True)
 
 
-    def create_toc(self):
-        background_headers = self.lab.parse_headers(["HEADER Level 1", "HEADER Level 2"])
-        self.set_toc_frame("TOC_Background", background_headers, "TOC1")
 
-        rules_headers = self.lab.parse_headers(["HEADER Rules"])
-        self.set_toc_frame("TOC_Rules", rules_headers, "TOC Rules")
+    def create_toc(self):
+        scribus.saveDoc()
+        # background_headers = self.lab.parse_headers(["HEADER Level 1", "HEADER Level 2"])
+        background_headers = self.lab.parse_headers_multilevel([(1,"HEADER Level 1"), (2,"HEADER Level 2")])
+        self.set_toc_frame("TOC_Background", background_headers, [(1,"TOC level 1"),(2,"TOC level 2")])
+
+        rules_headers = self.lab.parse_headers_multilevel([(1,"HEADER Rules")])
+        self.set_toc_frame("TOC_Rules", rules_headers, [(1,"TOC Rules")])
         scribus.docChanged(True)
 
 
