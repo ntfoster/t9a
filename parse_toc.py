@@ -125,6 +125,7 @@ def parse_contents(rules=True):
         if labels_rules := parse_toc(rules_toc_frame):
             rules_count = len(labels_rules)
             rules_page = labels_rules[0]["page"]
+        
         labels = custom_labels + [{"level":0, "label":"Background", "page":background_page, "children":background_count}] + labels_background + [{"level":0, "label":"Rules", "page":rules_page, "children":rules_count}] + labels_rules
     return lookup_labels(labels)
 
