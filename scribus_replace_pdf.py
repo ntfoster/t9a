@@ -10,7 +10,7 @@ except ImportError:
     print("the Python interpreter embedded in Scribus. Try Script->Execute Script.")
     sys.exit(1)
 
-from t9a_scribus import ScribusLAB
+from t9a.scribus import ScribusLAB
 from pathlib import Path
 
 def main(argv):

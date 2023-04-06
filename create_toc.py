@@ -16,7 +16,7 @@ except ImportError as err:
 #########################
 # YOUR IMPORTS GO HERE  #
 #########################
-from t9a_sla import LABfile
+from t9a.sla import LABfile
 
 def set_toc_frame(frame,headers,style):
     text = ""

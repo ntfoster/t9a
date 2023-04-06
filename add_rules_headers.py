@@ -13,7 +13,7 @@ except ImportError as err:
 
 import json
 # from get_rules_toc import get_titles
-from t9a_sla import LABfile
+from t9a.sla import LABfile
 from pathlib import Path
 import os
 import subprocess
@@ -45,6 +45,7 @@ def add_rules_headers(titles,rules_start):
         scribus.createText(56.58,841.89-title['ypos'],482,45,frame_name)
         scribus.setText(title['title'],frame_name)
         scribus.setParagraphStyle("HEADER Rules", frame_name)
+    scribus.docChanged(True)
 
 def load_titles_from_json(filename):
     with open(filename) as json_file:
@@ -69,12 +70,13 @@ def set_rules_headers():
         print(script_path)
         current_env = os.environ.copy()
         current_env['PYTHONPATH'] = "" # need to clear out Scribus' pythonpath before calling subprocess to avoid import errors
-        subprocess.run(f'python3 "{script_path}" "{pdf_file}"',shell=True,env=current_env)
+        p = subprocess.run(f'python3 "{script_path}" "{pdf_file}"',shell=True,env=current_env)
         # os.system(f'python3 "{script_path}" "{pdf_file}"')
         # subprocess.run(["python3","--version"],shell=True)
     try:
         print("trying to load titles")
         titles = load_titles_from_json(json_file)
+        # scribus.saveDoc()
     except:
         scribus.messageBox("Titles not found",f"The file {json_file} could not be found. Please make sure you have the py_pdf_parser module installed and can run t9a_pdf.py manually.")
         return

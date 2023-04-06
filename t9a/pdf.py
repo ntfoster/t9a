@@ -1,10 +1,11 @@
 '''Contains functions to analyse Slim Rules PDFs'''
-from py_pdf_parser.loaders import load_file
 import re
 import sys
 import os
 import json
 from pathlib import Path
+from py_pdf_parser.loaders import load_file
+
 
 DEFAULT_FILENAME = r"D:\9th age\Scribus LABs\LAB_ID\images\T9A-FB_2ed_ID_2021_beta4_EN.pdf"
 
@@ -19,11 +20,9 @@ def parse_title(text):
 
 def get_titles(filename,details=False):
     doc = load_file(filename, font_mapping=FONT_MAPPING, font_mapping_is_regex=True)
-    items = doc.elements.filter_by_font("chapter_title")
+    titles = doc.elements.filter_by_font("chapter_title")
     entries = []
-    index = 0
-    for item in items:
-        index += 1
+    for index, item in enumerate(titles, start=1):
         title = parse_title(item.text())
         if title != "Changelog":
             entry = {}
@@ -41,7 +40,7 @@ def export_titles(filename):
     pdf_file = Path(filename)
     export_filename = pdf_file.parent.parent / Path(pdf_file.name).with_suffix('.json')
     with open(export_filename,"w") as outfile:
-        json.dump(titles,outfile)
+        json.dump(titles,outfile,indent=4)
     return titles
 
 

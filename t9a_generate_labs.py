@@ -2,14 +2,13 @@ import os
 from pathlib import Path
 import subprocess
 import argparse
-import time
 from datetime import datetime
 import shutil
 import sys
 from parse_toc import parse_file
 from t9a_add_bookmarks import add_bookmarks
 import re
-from t9a_sla import LABfile
+from t9a.sla import LABfile
 
 ### Constants ####
 HIGH_DPI = 300

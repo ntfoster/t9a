@@ -14,7 +14,7 @@ except ImportError as err:
     sys.exit(1)
 
 
-from t9a_sla import LABfile
+from t9a.sla import LABfile
 
 FOOTER_X_POS = 20
 FOOTER_Y_POS = 285.5
