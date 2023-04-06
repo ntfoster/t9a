@@ -1,3 +1,4 @@
+'''Contains methods to manipulate T9A Army Books in Scribus'''
 import sys
 
 try:
@@ -11,17 +12,20 @@ except ImportError as err:
     sys.exit(1)
 
 from pathlib import Path
-from t9a_sla import LABfile
 import re
+import json
+import time
+
+import t9a
+# from t9a import EXPECTED_STYLES, EXPECTED_FRAMES
+from t9a.sla import LABfile
 
 # TODO: test that proper frames exist first
-
-EXPECTED_FRAMES = ["rules_start", "rules_end", "epilogue_page", "edition", "version_number", "full_title", "norules_title", "nopoints_title", "rules_links"]
 
 #####################
 ### FOOTER CONFIG ###
 #####################
-FOOTER_X_LOCS = [20, 23, 116] # for removing footers
+FOOTER_X_LOCS = [19, 20, 23, 116] # for removing footers
 FOOTER_Y_LOCS = [280, 281, 282, 283, 284, 285, 286, 287, 288, 289] # for removing footers
 
 FOOTER_X_POS = 20
@@ -58,7 +62,7 @@ def test_frames():
     missing_frames = []
     try:
         scribus.deselectAll()
-        for frame in EXPECTED_FRAMES:
+        for frame in t9a.EXPECTED_FRAMES:
             try:
                 scribus.selectObject(frame)
             except:
@@ -80,6 +84,12 @@ class ScribusLAB:
         self.rules_start = int(scribus.getText('rules_start'))
         self.rules_end = int(scribus.getText("rules_end"))
 
+    def test_styles(self):
+        doc_styles = scribus.getParagraphStyles()
+        missing_styles = [style for style in t9a.EXPECTED_STYLES if style not in doc_styles]
+        if missing_styles:
+            return(missing_styles)
+
     def remove_rules_headers(self):
         scribus.setActiveLayer('Notes')
         page = self.rules_start-1
@@ -89,27 +99,36 @@ class ScribusLAB:
             items = scribus.getAllObjects(4,page,'Notes')
             if len(items) > 0:
                 for item in items:
+                    if scribus.isLocked(item):
+                        scribus.lockObject(item)
                     scribus.deleteObject(item)
-            page +=1
-
+            page += 1
         scribus.setRedraw(True)
+        scribus.docChanged(True)
+
+    def load_titles_from_json(self,filename):
+        with open(filename) as json_file:
+            return json.load(json_file)
 
     def add_rules_headers(self,titles):
+        current_units = scribus.getUnit()
+        scribus.setUnit(scribus.UNIT_POINTS)
         scribus.setActiveLayer('Notes')
         for title in titles:
             page_number = title['page']+self.rules_start-2
             scribus.gotoPage(page_number)
-            frame_name = title['title']+' Header'
-            scribus.createText(56.58,841.89-title['ypos'],482,45,frame_name)
+            # frame_name = title['title']+' Header'
+            frame_name = scribus.createText(56.58,841.89-title['ypos'],482,45)
             scribus.setText(title['title'],frame_name)
-            scribus.setParagraphStyle("HEADER Rules", frame_name)
+            scribus.setParagraphStyle(t9a.HEADER_RULES, frame_name)
+        scribus.setUnit(current_units)
         scribus.docChanged(True)
 
 
     def get_rules_pages(self):
-        rules_start = scribus.getAllText("rules_start")
-        rules_end = scribus.getAllText("rules_end")
-        return (int(rules_start),int(rules_end))
+        rules_start = int(scribus.getAllText("rules_start"))
+        rules_end = int(scribus.getAllText("rules_end"))
+        return(rules_start,rules_end)
 
     def get_embedded_rules(self):
         items = scribus.getAllObjects(
@@ -152,6 +171,7 @@ class ScribusLAB:
 
 
     def set_toc_frame(self,frame, headers, style_map):
+        # TODO: adjust size of frame based on number of headers
         text = ""
         char_count = 0
         # if 2 in [h['level'] for h in headers]:
@@ -169,7 +189,6 @@ class ScribusLAB:
             line = f'{entry["text"]}\t{entry["page"]}\n'
             text += line
         scribus.setText(text, frame)
-        scribus.docChanged(True)
         try:
             scribus.setParagraphStyle(style_map[0][1], frame)
         except scribus.NotFoundError:
@@ -185,15 +204,15 @@ class ScribusLAB:
         scribus.docChanged(True)
 
 
-
     def create_toc(self):
-        scribus.saveDoc()
         # background_headers = self.lab.parse_headers(["HEADER Level 1", "HEADER Level 2"])
-        background_headers = self.lab.parse_headers_multilevel([(1,"HEADER Level 1"), (2,"HEADER Level 2")])
-        self.set_toc_frame("TOC_Background", background_headers, [(1,"TOC level 1"),(2,"TOC level 2")])
+        # scribus.saveDoc()
+        # time.sleep(2)
+        background_headers = self.lab.parse_headers_multilevel([(1,t9a.HEADER1), (2,t9a.HEADER2)])
+        self.set_toc_frame("TOC_Background", background_headers, [(1,t9a.TOC1),(2,t9a.TOC2)])
 
-        rules_headers = self.lab.parse_headers_multilevel([(1,"HEADER Rules")])
-        self.set_toc_frame("TOC_Rules", rules_headers, [(1,"TOC Rules")])
+        rules_headers = self.lab.parse_headers_multilevel([(1,t9a.HEADER_RULES)])
+        self.set_toc_frame("TOC_Rules", rules_headers, [(1,t9a.TOC_RULES)])
         scribus.docChanged(True)
 
 
@@ -209,8 +228,8 @@ class ScribusLAB:
             for item in items:
                 pos = scribus.getPosition(item[0])
                 # if round(pos[0]) == 20 and round(pos[1]) == 286:
-                # if round(pos[0]) in FOOTER_X_LOCS and round(pos[1]) in FOOTER_X_LOCS:
-                if round(pos[0]) in [20, 23, 116] and pos[1] // 10 == 28:
+                if round(pos[0]) in FOOTER_X_LOCS and round(pos[1]) in FOOTER_Y_LOCS:
+                # if round(pos[0]) in [20, 23, 116] and pos[1] // 10 == 28:
                     if scribus.isLocked(item[0]):
                         scribus.lockObject(item[0])
                     scribus.deleteObject(item[0])
@@ -226,17 +245,11 @@ class ScribusLAB:
         scribus.setText(footer, label)
 
         try: # try different style names
-            scribus.setStyle("Footer Left", label)
+            scribus.setStyle(t9a.FOOTER_L, label)
         except scribus.NotFoundError:
-            try:
-                scribus.setStyle("FOOTER left", label)
-            except scribus.NotFoundError:
-                try:
-                    scribus.setStyle("FOOTER Left", label)
-                except scribus.NotFoundError:
-                    scribus.messageBox(
-                        "Style Error", "Couldn't find appropriate Footer style: 'Footer Left', 'FOOTER left' or 'FOOTER Left'")
-                    sys.exit()
+            scribus.messageBox(
+                "Style Error", f"Couldn't find appropriate Footer style: {t9a.FOOTER_L}")
+            sys.exit()
         scribus.docChanged(True)
 
     def create_footer_UD(self, page, footer):
@@ -246,7 +259,7 @@ class ScribusLAB:
                 UD_FOOTER_X_POS_EVEN, UD_FOOTER_Y_POS, FOOTER_WIDTH, FOOTER_HEIGHT)
             scribus.setText(footer, label)
             try:
-                scribus.setStyle("FOOTER left", label)
+                scribus.setStyle(t9a.FOOTER_L, label)
             except scribus.NotFoundError:
                 scribus.messageBox(
                     "Style Error", "Couldn't find appropriate Footer style: 'FOOTER left'")
@@ -256,7 +269,7 @@ class ScribusLAB:
                 UD_FOOTER_X_POS_ODD, UD_FOOTER_Y_POS, FOOTER_WIDTH, FOOTER_HEIGHT)
             scribus.setText(footer, label)
             try:
-                scribus.setStyle("FOOTER right", label)
+                scribus.setStyle(t9a.FOOTER_R, label)
             except scribus.NotFoundError:
                 scribus.messageBox(
                     "Style Error", "Couldn't find appropriate Footer style: 'FOOTER right'")
@@ -264,8 +277,9 @@ class ScribusLAB:
         scribus.docChanged(True)
 
     def set_footers(self):
-        background_headers = self.lab.parse_headers(["HEADER Level 1", "HEADER Level 2"])
-        rules_headers = self.lab.parse_headers(["HEADER Rules"])
+        self.remove_footers
+        background_headers = self.lab.parse_headers([t9a.HEADER1, t9a.HEADER2])
+        rules_headers = self.lab.parse_headers([t9a.HEADER_RULES])
         headers = background_headers + rules_headers
         pages = range(8, scribus.pageCount())
 
@@ -299,8 +313,7 @@ class ScribusLAB:
             if scribus.isLocked(link):
                     scribus.lockObject(link) # unlock
             scribus.deleteObject(link)
-        # TODO: Finish this
-
+        scribus.docChanged(True)
 
     def create_hyperlinks(self, frame, prefix):
         # TODO: Handle multi-line entries

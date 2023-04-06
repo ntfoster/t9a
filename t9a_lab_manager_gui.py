@@ -2,8 +2,8 @@ from json import load
 import subprocess
 import PySimpleGUI as sg
 import asyncio
-from t9a_sla import LABfile
-from t9a_pdf import match_titles, get_version_from_PDF
+from t9a.sla import LABfile
+from t9a.pdf import match_titles, get_version_from_PDF
 import json
 from xml.etree.ElementTree import ParseError
 import os.path
@@ -14,7 +14,7 @@ import subprocess
 async def compare_rules(pdf1, pdf2):
     return await asyncio.run(match_titles(pdf1, pdf2))
 
-SETTINGS_FILE = 't9a_lab_manager_settings.json'
+SETTINGS_FILE = './lab_manager/t9a_lab_manager_settings.json'
 CURRENT_LABS = ["ID", "WDG", "DL", "UD", "SE"]
 
 from t9a_base64 import t9a_icon_base64 as T9A_ICON
