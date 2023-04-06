@@ -1,6 +1,7 @@
-"""Contains methods for interacting with the .sla file for a 9th Age book"""
+"""Contains methods for interacting with the .sla file for a 9th Age Full/Legendary Army Book"""
 
 from pathlib import Path
+
 import xml.etree.ElementTree as ET
 
 VERSION_FRAME = "version_number"
@@ -9,12 +10,46 @@ VERSION_FRAME = "version_number"
 class InvalidMarkException(Exception):
     pass
 
+
 class LABfile:
+
     def __init__(self, filename):
         self.filename = filename
         self.tree = ET.parse(filename)
         self.root = self.tree.getroot()
 
+    def test_frames(self,frames):
+        '''Tests if a list of frames is present in the document.
+        
+        Args:
+            frames ([string]): A list of frame names to test
+
+        Returns:
+            [string]: A list of missing frames    
+        '''
+        return [
+            frame
+            for frame in frames
+            if self.root.find(f'./DOCUMENT/PAGEOBJECT[@ANNAME="{frame}"]') is None
+        ]
+    
+    def test_styles(self, styles):
+        """
+        Tests if a list of styles exists in the document.
+
+        Args:
+            styles: A list of style names to test
+
+        Returns:
+            [string]: A list of missing styles
+        """
+        return [
+            style
+            for style in styles
+            if self.root.find(f'./DOCUMENT/STYLE[@NAME="{style}"]') is None
+        ]
+
+    
     def get_layer_number(self,layer):
         """Returns layer number for the given layer name
 
