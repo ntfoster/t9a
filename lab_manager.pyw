@@ -349,7 +349,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 subprocess.Popen(window['-RULES-'].get(), shell=True)
             
             case "-OPEN-NEW-RULES-":
-                subprocess.Popen(new_pdf, shell=True)
+                subprocess.Popen(str(new_pdf), shell=True)
             
             case "-ADD-NEW-":
                 if new_file := add_edit_file():
