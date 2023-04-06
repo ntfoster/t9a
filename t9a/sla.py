@@ -72,7 +72,7 @@ class LABfile:
         rules_layer = self.get_layer_number("Rules")
         for element in self.root.findall(f'./DOCUMENT/PAGEOBJECT[@LAYER="{rules_layer}"]'):
             if "PFILE" in element.attrib and element.get("PFILE")[-4:] == ".pdf":
-                element.set("PFILE",new_pdf)
+                element.set("PFILE",str(new_pdf))
         if output_file:
             print(f'Writing to file: {output_file}')
             self.tree.write(output_file)
