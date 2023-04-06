@@ -26,7 +26,7 @@ def fix_styles(filename):
         old_name = element.get('NAME').lower()
         if old_name in style_dict:
             new_name = style_dict[old_name]
-            element.set('PARENT', new_name)
+            element.set('NAME', new_name)
             print(f"{element.get('NAME')} -> {new_name}")
         if element.get('PARENT'):
             p_name = element.get('PARENT').lower()
