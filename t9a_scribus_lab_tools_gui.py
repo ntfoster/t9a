@@ -10,8 +10,6 @@ except ImportError as err:
     print("It can only be run from within Scribus.")
     sys.exit(1)
 
-# from tkinter import *
-# from tkinter import messagebox
 import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
@@ -19,11 +17,13 @@ import os
 import subprocess
 
 import t9a_export_pdfs
+from t9a.scribus import ScribusLAB
 # from add_rules_headers import set_rules_headers
 
 GET_JSON_SCRIPT = "get_rules_json.py"
 
 options = {}
+
 
 def export_menu():
     # TODO: replace tk with ttk for better looking widgets
@@ -32,15 +32,13 @@ def export_menu():
 
     # create root window
     root = tk.Tk()
+    root.eval('tk::PlaceWindow . center')
 
     # root window title and dimension
     root.title("T9A LAB Tools")
-    # Set geometry(widthxheight)
-    # root.geometry("300x500")
 
-    w = 260  # width for the Tk root
-    h = 420  # height for the Tk root
-
+    w = root.winfo_reqwidth()
+    h = root.winfo_reqheight()
     # get screen width and height
     ws = root.winfo_screenwidth()  # width of the screen
     hs = root.winfo_screenheight()  # height of the screen
@@ -51,8 +49,8 @@ def export_menu():
 
     # set the dimensions of the screen
     # and where it is placed
-    root.geometry("%dx%d+%d+%d" % (w, h, x, y))
-
+    # root.geometry("%dx%d+%d+%d" % (w, h, x, y))
+    # root.geometry("+%d+%d" % (x, y))
     # frame = Frame(root)
     # frame.grid(column=0,row=0)
 
@@ -164,7 +162,7 @@ def export_menu():
     tk.Button(helpers, text="Replace rules PDF", width=20,
               command=run_h6).grid(column=0, row=5, sticky="EW")
 
-    
+
     h1_var = tk.StringVar()
     h1_var.set("")
     h2_var = tk.StringVar()
@@ -212,10 +210,14 @@ def export_menu():
     low.set(True)
     # printq.set(False)
 
-    tk.Checkbutton(quality, text="High", variable=high).grid(column=0,row=0)
-    tk.Checkbutton(quality, text="Low", variable=low).grid(column=0,row=1)
-    tk.Checkbutton(quality, text="Print", state=tk.DISABLED).grid(column=0,row=2)
-    
+    # tk.Checkbutton(quality, text="High", variable=high).grid(column=0,row=0)
+    # tk.Checkbutton(quality, text="Low", variable=low).grid(column=0,row=1)
+    # tk.Checkbutton(quality, text="Print", state=tk.DISABLED).grid(column=0,row=2)
+
+    tk.Checkbutton(quality, text="High", variable=high, ).pack(anchor="w")
+    tk.Checkbutton(quality, text="Low", variable=low,).pack(anchor="w")
+    tk.Checkbutton(quality, text="Print", state=tk.DISABLED).pack(anchor="w")
+
     formats = tk.LabelFrame(
         export_options, text="Format", bd=2, relief=tk.GROOVE, padx=10, pady=10
     )
@@ -229,11 +231,11 @@ def export_menu():
     nopoints.set(True)
     norules.set(False)
 
-    tk.Checkbutton(formats, text="Full", variable=full).grid(column=0, row=0)
+    tk.Checkbutton(formats, text="Full", variable=full).pack(anchor="w")
     tk.Checkbutton(formats, text="No Points",
-                   variable=nopoints).grid(column=0, row=1)
+                   variable=nopoints).pack(anchor="w")
     tk.Checkbutton(formats, text="Background Only",
-                   variable=norules).grid(column=0, row=2)
+                   variable=norules).pack(anchor="w")
 
     buttons = tk.Frame(root)
     buttons.grid(column=0, row=2, sticky="EW",padx=10,pady=10)
@@ -271,7 +273,7 @@ def export_menu():
 
     tk.Button(buttons, text="Export", fg="Red",
               command=export).pack(side=tk.RIGHT)
-    
+
     tk.Button(buttons, text="Done", command=root.destroy).pack(side=tk.LEFT)
 
     root.mainloop()
