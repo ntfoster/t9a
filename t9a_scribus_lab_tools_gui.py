@@ -15,9 +15,13 @@ except ImportError as err:
 import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
+import os
+import subprocess
+
 import t9a_export_pdfs
-from t9a_scribus import ScribusLAB
-from add_rules_headers import set_rules_headers
+# from add_rules_headers import set_rules_headers
+
+GET_JSON_SCRIPT = "get_rules_json.py"
 
 options = {}
 
@@ -56,6 +60,36 @@ def export_menu():
         root, text="Helpers", bd=2, relief=tk.GROOVE, padx=10, pady=10
     )
     helpers.grid(padx=5,pady=5, sticky="EW")
+
+    def set_rules_headers():
+        rules_pdf = lab.get_embedded_rules()
+        rules = Path(rules_pdf)
+        json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
+        if not Path(json_file).is_file():
+            script_path = Path(__file__).parents[0] / GET_JSON_SCRIPT
+            current_env = os.environ.copy()
+            current_env['PYTHONPATH'] = ""  # need to clear out Scribus' pythonpath before calling subprocess to avoid import errors
+            p = subprocess.run(f'python3 "{script_path}" "{rules}"', shell=True, env=current_env)
+            if p.returncode > 0: # if error
+                print(p.stderr)
+        try:
+            titles = lab.load_titles_from_json(json_file)
+        except Exception as err:
+            scribus.messageBox("Error loading JSON file", err)
+            return
+            
+        lab.remove_rules_headers()
+        lab.add_rules_headers(titles)
+        scribus.saveDoc()
+        root.destroy()
+
+    def run_script(method,status):
+        try:
+            method()
+            status.set("Done")
+        except Exception as err:
+            status.set("Error")
+            scribus.messageBox("Error",err)
 
     def run_h1():
         try:
