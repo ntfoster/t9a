@@ -1,3 +1,5 @@
 __pycache__
-scribus.py
+/scribus.py
 t9a_lab_manager_settings.json
+.vscode
+.sourcery.yaml
