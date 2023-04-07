@@ -16,9 +16,8 @@ from pathlib import Path
 import os
 import subprocess
 
-import t9a_export_pdfs
+from t9a_export_pdfs import export_pdfs
 from t9a.scribus import ScribusLAB
-# from add_rules_headers import set_rules_headers
 
 GET_JSON_SCRIPT = "get_rules_json.py"
 
@@ -280,24 +279,19 @@ def export_menu():
 
 
 def main():
-    if Path(scribus.getDocName()).suffix == ".sla":
-        export_menu()
-
-        if options:
-            args = ["scribus", "--quality"]
-            args.extend(iter(options["qualities"]))
-            args.append("--formats")
-            args.extend(iter(options["formats"]))
-            print(args)
-            # t9a_export_pdfs.main_wrapper(args)
-            t9a_export_pdfs.export_pdfs(options["formats"], options["qualities"])
-
-            # scribus.messageBox("Options",f"Selected options: {str(options)}")
-
-        else:
-            sys.exit()
+    doc_name = Path(scribus.getDocName())
+    
+    if doc_name.suffix != ".sla":
+        scribus.messageBox("File not found", f"{doc_name} is not a valid .sla file. This script should only be run with an open T9A LAB file.")
+        return
+    
+    export_menu()
+    
+    if options:
+        args = ["scribus", "--quality"] + list(options["qualities"]) + ["--formats"] + list(options["formats"])
+        export_pdfs(options["formats"], options["qualities"])
     else:
-        scribus.messageBox("File not found",f"{scribus.getDocName()} is not a valid .sla file. This script should only be run with an open T9A LAB file.")
+        sys.exit()
 
 # This code detects if the script is being run as a script, or imported as a module.
 # It only runs main() if being run as a script. This permits you to import your script

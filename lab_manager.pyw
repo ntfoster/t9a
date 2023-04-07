@@ -17,6 +17,7 @@ from t9a_base64 import t9a_icon_base64 as T9A_ICON
 SETTINGS_FILE = Path(__file__).parent / "lab_manager/t9a_lab_manager_settings.json"
 CURRENT_LABS = ["ID", "WDG", "DL", "UD", "SE"]
 
+
 async def compare_rules(pdf1, pdf2):
     return await asyncio.run(match_titles(pdf1, pdf2))
 
@@ -27,7 +28,7 @@ def copy_file(file: Path, directory: Path):
     destination = directory / file.name
     print(f"Copying {file} to {destination}")
     try:
-        shutil.copy(file,destination)
+        shutil.copy(file, destination)
     except shutil.SameFileError:
         print("Old file and new file are the same")
     return destination
@@ -38,15 +39,15 @@ def get_settings():
         with open(SETTINGS_FILE) as json_file:
             return json.load(json_file)
     else:
-        entries = [{"name":lab,"filename":None} for lab in CURRENT_LABS ]
-        settings = {"labs":entries}
-        with open(SETTINGS_FILE,"w") as json_file:
+        entries = [{"name": lab, "filename": None} for lab in CURRENT_LABS]
+        settings = {"labs": entries}
+        with open(SETTINGS_FILE, "w") as json_file:
             json.dump(settings, json_file, indent=4)
     return settings
-    
 
-def update_settings_list(settings,list):
-    lab_list = [{"name":entry[0],"filename":entry[1]} for entry in list]
+
+def update_settings_list(settings, list):
+    lab_list = [{"name": entry[0], "filename":entry[1]} for entry in list]
     settings['labs'] = lab_list
     with open(SETTINGS_FILE, "w") as json_file:
         json.dump(settings, json_file, indent=4)
@@ -54,16 +55,16 @@ def update_settings_list(settings,list):
 
 def open_scribus(filename=None):
     if scribus_exe := shutil.which("scribus"):
-        subprocess.Popen([scribus_exe,filename])
+        subprocess.Popen([scribus_exe, filename])
     else:
         sg.popup_ok("Couldn't launch Scribus. Is it installed and is the scribus executable on your PATH?",
-                       title="Couldn't launch Scribus")
+                    title="Couldn't launch Scribus")
 
 
 def main():  # sourcery skip: use-fstring-for-concatenation
     sg.theme('Dark Blue 14')
     settings = get_settings()
-    lab_list = [[lab['name'],lab['filename']] for lab in settings['labs']]
+    lab_list = [[lab['name'], lab['filename']] for lab in settings['labs']]
 
     file_list_column = [
         [sg.Text("Favourites")],
@@ -79,23 +80,23 @@ def main():  # sourcery skip: use-fstring-for-concatenation
     tools_column = [
         [sg.Frame("Scribus File", [
             [sg.In(size=50, key='-FILE-', enable_events=True),
-            sg.FileBrowse(target='-FILE-', file_types=(("SLA Files", "*.sla"),)),
-            sg.Button("Open in Scribus", key="-OPEN-SCRIBUS-", disabled=True, size=13)]])],
+             sg.FileBrowse(target='-FILE-', file_types=(("SLA Files", "*.sla"),)),
+             sg.Button("Open in Scribus", key="-OPEN-SCRIBUS-", disabled=True, size=13)]])],
         [sg.Frame("Embedded Rules", [
             [sg.In(size=(50, 1), key="-RULES-", expand_x=True, readonly=True)],
             [sg.Button("Open PDF", key="-OPEN-OLD-RULES-", disabled=True, size=13),
-            sg.Text("Version:"), sg.Text(key="-OLD-VERSION-", relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
+             sg.Text("Version:"), sg.Text(key="-OLD-VERSION-", relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
         ], expand_x=True)],
         [sg.Frame("New Rules", [
             [sg.In(size=50, key='-NEW-RULES-', visible=True, enable_events=True),
-            sg.FileBrowse(target='-NEW-RULES-')],
+             sg.FileBrowse(target='-NEW-RULES-')],
             [sg.Button("Open PDF", key="-OPEN-NEW-RULES-", disabled=True, size=13),
-            sg.Text("Version:"), sg.Text(key='-NEW-VERSION-', relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
+             sg.Text("Version:"), sg.Text(key='-NEW-VERSION-', relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
         ])],
         [sg.Frame("Compare and Replace", [
             [sg.Button("Compare", key="-COMPARE-", disabled=True),
-            sg.Text("Result:"), sg.Text(key="-RESULT-", relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True),
-            sg.Button("Replace", key="-REPLACE-", disabled=True, button_color="red")],
+             sg.Text("Result:"), sg.Text(key="-RESULT-", relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True),
+             sg.Button("Replace", key="-REPLACE-", disabled=True, button_color="red")],
         ], expand_x=True)],
         [sg.Button("Select Files for Export…", key="-EXPORT-MENU-")],
     ]
@@ -103,7 +104,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
     # Full layout
     layout = [
         [
-            sg.Col(file_list_column, vertical_alignment="top",expand_x=True, expand_y=True,),
+            sg.Col(file_list_column, vertical_alignment="top", expand_x=True, expand_y=True,),
             sg.Col(tools_column, vertical_alignment="top")
         ]
     ]
@@ -116,17 +117,17 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
         add_edit_layout = [
             [
-                sg.Text("Army",size=10),
+                sg.Text("Army", size=10),
                 sg.In(size=(20, 1), key="-NEW-NAME-"),
             ],
             [
-                sg.Text("Filename",size=10),
+                sg.Text("Filename", size=10),
                 sg.In(size=(60, 1), key="-NEW-FILE-"),
                 sg.FileBrowse(file_types=(("SLA Files", "*.sla"),))
             ],
             [sg.Button('OK', key="-SUBMIT-")]
         ]
-        
+
         title = "Edit File" if entry else "New File"
         window = sg.Window(title, add_edit_layout, use_default_focus=False, finalize=True, modal=True)
 
@@ -135,10 +136,10 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             window['-NEW-FILE-'].update(entry[1])
         event, values = window.read()
         if values:
-            result = [values['-NEW-NAME-'],values['-NEW-FILE-']]
+            result = [values['-NEW-NAME-'], values['-NEW-FILE-']]
             window.close()
             return result
-        
+
     def export_menu():
         # TODO: Check for _nopoints.pdf files before exporting No Points version
         quality_options = [
@@ -198,7 +199,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
                 case "Exit" | sg.WIN_CLOSED:
                     break
-                
+
                 case "-EXPORT-BUTTON-":
                     selected_files = [lab_list[entry][1] for entry in values["-FILE-LIST-"]]
                     qualities = []
@@ -226,7 +227,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                         file_list += f'"{file}" '
                     print(file_list)
                     flags = []
-                    if values["-o-noexport-"]: 
+                    if values["-o-noexport-"]:
                         flags.append("--noexport")
                     if values["-o-noprocess-"]:
                         flags.append("--noprocess")
@@ -234,12 +235,11 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                         dest = f"--dest {values['-OUT-DIR-']}"
                     else:
                         dest = ""
-                    command = sg.execute_command_subprocess("python", "t9a_generate_labs.py", file_list, "--quality", ' '.join(qualities), "--formats", ' '.join(formats), ' '.join(flags), dest,pipe_output=True)
+                    command = sg.execute_command_subprocess("python", "t9a_generate_labs.py", file_list, "--quality", ' '.join(qualities),
+                                                            "--formats", ' '.join(formats), ' '.join(flags), dest, pipe_output=True)
                     print(sg.execute_get_results(command)[0])
- 
-        window.close()
-                
 
+        window.close()
 
     def load_file(filename):
         try:
@@ -260,7 +260,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             window["-RULES-"].update("Error")
         return lab
 
-
     def disable_load():
         window["-OPEN-SCRIBUS-"].update(disabled=True)
         window["-OPEN-OLD-RULES-"].update(disabled=True)
@@ -279,7 +278,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             case "-FILE-":
                 filename = Path(values["-FILE-"])
                 lab = load_file(filename)
-            
+
             case "-FILE-LIST-":
                 if values[event]:
                     data_selected = [lab_list[row] for row in values[event]]
@@ -330,7 +329,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
                 except:
                     window['-RESULT-'].update('ERROR')
-            
+
             case "-REPLACE-":
                 # nopoints = os.path.splitext(new_pdf)[0] + '_nopoints.pdf'
                 nopoints = new_pdf.parent / (new_pdf.stem + '_nopoints.pdf')
@@ -344,41 +343,42 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 window["-RULES-"].update(rules_pdf)
                 new_version = window["-NEW-VERSION-"].get()
                 lab.set_version(new_version)
-            
+
             case "-OPEN-OLD-RULES-":
                 subprocess.Popen(window['-RULES-'].get(), shell=True)
-            
+
             case "-OPEN-NEW-RULES-":
                 subprocess.Popen(str(new_pdf), shell=True)
-            
+
             case "-ADD-NEW-":
                 if new_file := add_edit_file():
                     lab_list.append(new_file)
                     window['-FILE-LIST-'].update(lab_list)
-                    update_settings_list(settings,lab_list)
-            
+                    update_settings_list(settings, lab_list)
+
             case "-EDIT-SELECTED-":
                 selected_row = values["-FILE-LIST-"][0]
                 data_selected = lab_list[selected_row]
                 if new_file := add_edit_file(data_selected):
                     lab_list[selected_row] = new_file
                     window['-FILE-LIST-'].update(lab_list)
-                    update_settings_list(settings,lab_list)
-            
+                    update_settings_list(settings, lab_list)
+
             case "-DELETE-SELECTED-":
                 selected_row = values["-FILE-LIST-"][0]
                 lab_list.pop(selected_row)
                 window['-FILE-LIST-'].update(lab_list)
-                update_settings_list(settings,lab_list)
-            
+                update_settings_list(settings, lab_list)
+
             case "-OPEN-SCRIBUS-":
                 filename = Path(values["-FILE-"])
                 print(f"opening {filename} in Scribus")
                 open_scribus(filename)
-            
+
             case "-EXPORT-MENU-":
                 export_menu()
-    
+
     window.close()
+
 
 main()
