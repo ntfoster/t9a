@@ -1,14 +1,9 @@
 import sys
+from pathlib import Path
 
-try:
-    # Please do not use 'from scribus import *' . If you must use a 'from import',
-    # Do so _after_ the 'import scribus' and only import the names you need, such
-    # as commonly used constants.
-    import scribus
-except ImportError as err:
-    print("This Python script is written for the Scribus scripting interface.")
-    print("It can only be run from within Scribus.")
-    sys.exit(1)
+import scribus
+
+sys.path.append(str(Path(__file__).parents[1])) # needed to run from subdirectory
 
 from t9a.scribus import ScribusLAB
 
