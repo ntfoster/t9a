@@ -11,7 +11,7 @@ import PySimpleGUI as sg
 
 from t9a.pdf import get_version_from_PDF, match_titles
 from t9a.sla import LABfile
-from t9a_base64 import t9a_icon_base64 as T9A_ICON
+from t9a import T9A_ICON
 
 
 SETTINGS_FILE = Path(__file__).parent / "lab_manager/t9a_lab_manager_settings.json"
