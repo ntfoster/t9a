@@ -1,13 +1,13 @@
 import sys
 
-from t9a.pdf import export_titles
+from t9a.pdf import export_titles_to_json
 
 def main(args):
     if len(args) > 0:
         filename = args[1]
         print(filename)
         try:
-            print(export_titles(filename))
+            print(export_titles_to_json(filename))
             sys.exit(0) # success
         except FileNotFoundError:
             print(f"{filename} does not exist", file=sys.stderr)

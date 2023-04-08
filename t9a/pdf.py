@@ -35,11 +35,12 @@ def get_titles(filename,details=False):
             entries.append(entry)
     return entries
 
-def export_titles(filename):
-    titles = get_titles(filename,details=True)
-    pdf_file = Path(filename)
-    export_filename = pdf_file.parent.parent / Path(pdf_file.name).with_suffix('.json')
-    with open(export_filename,"w") as outfile:
+def export_titles_to_json(pdf_file,json_file=None):
+    titles = get_titles(pdf_file,details=True)
+    pdf_file = Path(pdf_file)
+    if not json_file:
+        json_file = pdf_file.parent.parent / Path(pdf_file.name).with_suffix('.json')
+    with open(json_file,"w") as outfile:
         json.dump(titles,outfile,indent=4)
     return titles
 
@@ -89,7 +90,7 @@ def main(args):
                 valid_file = True
             else:
                 print("Filename does not exist")
-    print(export_titles(filename),headers="keys",tablefmt="simple")
+    print(export_titles_to_json(filename),headers="keys",tablefmt="simple")
 
 if __name__ == '__main__':
     main(sys.argv)
