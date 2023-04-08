@@ -15,6 +15,7 @@ from tkinter import ttk
 from pathlib import Path
 import os
 import subprocess
+import shutil
 
 from t9a_export_pdfs import export_pdfs
 from t9a.scribus import ScribusLAB
@@ -23,6 +24,11 @@ GET_JSON_SCRIPT = "get_rules_json.py"
 
 options = {}
 
+def get_python_path():
+    from pathlib import Path
+    with open(Path(__file__).parent/".python_path","r") as path_file:
+        path = path_file.read()
+    return path
 
 def export_menu():
     # TODO: replace tk with ttk for better looking widgets
@@ -59,16 +65,24 @@ def export_menu():
     helpers.grid(padx=5,pady=5, sticky="EW")
 
     def set_rules_headers():
+        print("\n\n******************************************************************************\n\n")
         rules_pdf = lab.get_embedded_rules()
         rules = Path(rules_pdf)
         json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
+        print(f"Looking for {json_file}")
         if not Path(json_file).is_file():
-            script_path = Path(__file__).parents[0] / GET_JSON_SCRIPT
-            current_env = os.environ.copy()
-            current_env['PYTHONPATH'] = ""  # need to clear out Scribus' pythonpath before calling subprocess to avoid import errors
-            p = subprocess.run(f'python3 "{script_path}" "{rules}"', shell=True, env=current_env)
-            if p.returncode > 0: # if error
-                print(p.stderr)
+            # print("Not found; Generating")
+            # script_path = Path(__file__).parents[0] / GET_JSON_SCRIPT
+            # python_exe = get_python_path()
+            # current_env = os.environ.copy()
+            # current_env['PYTHONPATH'] = ""  # need to clear out Scribus' pythonpath before calling subprocess to avoid import errors
+            # print(f'running command: "{python_exe}" "{script_path}" "{rules}')
+            # p = subprocess.run(f'"{python_exe}" "{script_path}" "{rules}"', shell=True, env=current_env)
+            # print("Finished running command")
+            # if p.returncode > 0: # if error
+            #     print(p.stderr)
+            scribus.messageBox("Couldn't find JSON file",f"Couldn't fine {json_file}. Please run get_rules_json.py externally and try again")
+            raise FileNotFoundError(f"Couldn't fine {json_file}. Please run get_rules_json.py externally and try again")
         try:
             titles = lab.load_titles_from_json(json_file)
         except Exception as err:
