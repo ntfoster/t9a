@@ -3,8 +3,9 @@ import sys
 from t9a.pdf import export_titles
 
 def main(args):
-    if len(args) > 1:
+    if len(args) > 0:
         filename = args[1]
+        print(filename)
         try:
             print(export_titles(filename))
             sys.exit(0) # success
