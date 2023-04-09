@@ -9,7 +9,7 @@ from xml.etree.ElementTree import ParseError
 
 import PySimpleGUI as sg
 
-from t9a.pdf import get_version_from_PDF, match_titles
+from t9a.pdf import get_version_from_PDF, match_titles, export_titles_to_json
 from t9a.sla import LABfile
 from t9a import T9A_ICON
 
@@ -81,16 +81,17 @@ def main():  # sourcery skip: use-fstring-for-concatenation
         [sg.Frame("Scribus File", [
             [sg.In(size=50, key='-FILE-', enable_events=True),
              sg.FileBrowse(target='-FILE-', file_types=(("SLA Files", "*.sla"),)),
-             sg.Button("Open in Scribus", key="-OPEN-SCRIBUS-", disabled=True, size=13)]])],
+             sg.Button("Open in Scribus", key="-OPEN-SCRIBUS-", disabled=True, size=13)],])],
         [sg.Frame("Embedded Rules", [
             [sg.In(size=(50, 1), key="-RULES-", expand_x=True, readonly=True)],
-            [sg.Button("Open PDF", key="-OPEN-OLD-RULES-", disabled=True, size=13),
+            [sg.Button("Open PDF", key="-OPEN-OLD-RULES-", disabled=True,),
              sg.Text("Version:"), sg.Text(key="-OLD-VERSION-", relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
         ], expand_x=True)],
         [sg.Frame("New Rules", [
             [sg.In(size=50, key='-NEW-RULES-', visible=True, enable_events=True),
-             sg.FileBrowse(target='-NEW-RULES-')],
-            [sg.Button("Open PDF", key="-OPEN-NEW-RULES-", disabled=True, size=13),
+             sg.FileBrowse(target='-NEW-RULES-',file_types=(("PDF Files", "*.pdf"),))],
+            [sg.Button("Open", key="-OPEN-NEW-RULES-", disabled=True,),
+             sg.Button("Parse", key="-PARSE-PDF-", disabled=True,),
              sg.Text("Version:"), sg.Text(key='-NEW-VERSION-', relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
         ])],
         [sg.Frame("Compare and Replace", [
@@ -302,6 +303,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 window["-COMPARE-"].update(disabled=False)
                 window["-REPLACE-"].update(disabled=False)
                 window["-OPEN-NEW-RULES-"].update(disabled=False)
+                window["-PARSE-PDF-"].update(disabled=False)
 
             case "-COMPARE-":
                 rules_pdf = window["-RULES-"].get()
@@ -377,6 +379,15 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
             case "-EXPORT-MENU-":
                 export_menu()
+
+            case "-PARSE-PDF-":
+                if filename and filename.is_file():
+                    json_file = filename.parent/(filename.stem+".json")
+                else:
+                    json_file = None
+                print(f"asking to create {json_file}")
+                export_titles_to_json(new_pdf,json_file)
+                window["-NEW-VERSION-"].update("Exported")
 
     window.close()
 

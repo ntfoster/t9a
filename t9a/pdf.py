@@ -18,6 +18,7 @@ def parse_title(text):
     return re.sub(r' \(.+\)', '', text)
     # return text
 
+
 def get_titles(filename,details=False):
     doc = load_file(filename, font_mapping=FONT_MAPPING, font_mapping_is_regex=True)
     titles = doc.elements.filter_by_font("chapter_title")
@@ -35,11 +36,21 @@ def get_titles(filename,details=False):
             entries.append(entry)
     return entries
 
+
 def export_titles_to_json(pdf_file,json_file=None):
+    """Parses the titles from the given pdf file and creates a JSON file.
+
+    Args:
+        pdf_file (string): Full filename of rules PDF
+        json_file (_type_, optional): Filename of JSON file to export. If none provided, file is created in same location as PDF.
+
+    Returns:
+        List of dictionaries of parsed titles
+    """
     titles = get_titles(pdf_file,details=True)
     pdf_file = Path(pdf_file)
     if not json_file:
-        json_file = pdf_file.parent.parent / Path(pdf_file.name).with_suffix('.json')
+        json_file = Path(pdf_file).with_suffix('.json')
     with open(json_file,"w") as outfile:
         json.dump(titles,outfile,indent=4)
     return titles
@@ -61,6 +72,7 @@ def compare_pdfs(pdf1, pdf2,details=False):
     else:
         print("Contents don't match!")
 
+
 def get_version_from_PDF(pdf):
     filename = Path(pdf).stem
     # Examples:
@@ -75,22 +87,3 @@ def get_version_from_PDF(pdf):
         raise ValueError(f"Filename '{filename}' was not in an expected format")
     version_list = [r for r in result.groups() if r]
     return " ".join(version_list)
-
-def main(args):
-    if len(args) > 1:
-        filename = args[1]
-    else:
-        valid_file = False
-        while not valid_file:
-            filename = input("Enter filename of rules PDF to open: ").strip("\"")
-            if filename == '':
-                filename = DEFAULT_FILENAME
-                valid_file = True
-            elif os.path.isfile(filename):
-                valid_file = True
-            else:
-                print("Filename does not exist")
-    print(export_titles_to_json(filename),headers="keys",tablefmt="simple")
-
-if __name__ == '__main__':
-    main(sys.argv)
