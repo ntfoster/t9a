@@ -382,10 +382,10 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
             case "-PARSE-PDF-":
                 if filename and filename.is_file():
-                    json_file = filename.parent/(filename.stem+".json")
+                    json_file = filename.parent/(new_pdf.stem+".json")
                 else:
                     json_file = None
-                print(f"asking to create {json_file}")
+                print(f"Creating {json_file}")
                 export_titles_to_json(new_pdf,json_file)
                 window["-NEW-VERSION-"].update("Exported")
 
