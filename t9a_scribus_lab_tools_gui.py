@@ -58,7 +58,8 @@ def export_menu():
     def set_rules_headers():
         rules_pdf = lab.get_embedded_rules()
         rules = Path(rules_pdf)
-        json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
+        # json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
+        json_file = rules.with_suffix(".json")
         if not Path(json_file).is_file():
             # print("Not found; Generating")
             # script_path = Path(__file__).parents[0] / GET_JSON_SCRIPT

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os.path
 import shutil
 import subprocess
@@ -386,11 +387,12 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
             case "-PARSE-PDF-":
                 rules_pdf = Path(window["-RULES-"].get())
-                if filename and filename.is_file():
-                    json_file = filename.parent/(rules_pdf.stem+".json")
-                else:
-                    json_file = None
-                print(f"Creating {json_file}")
+                # if filename and filename.is_file():
+                #     json_file = filename.parent/(rules_pdf.stem+".json")
+                # else:
+                #     json_file = None
+                json_file = rules_pdf.with_suffix(".json")
+                logging.debug(f"Creating JSON file: {json_file}")
                 export_titles_to_json(rules_pdf,json_file)
                 window["-OLD-VERSION-"].update("Exported")
 
