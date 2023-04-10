@@ -294,13 +294,10 @@ class ScribusLAB:
             logging.debug(f"Background headers: {background_headers}")
             self.set_toc_frame("TOC_Background", background_headers, [(1,t9a.TOC1),(2,t9a.TOC2)])
         if rules:
-            rules_headers = self.lab.parse_headers_frames([t9a.HEADER_RULES])
+            rules_headers = self.parse_headings_frames(range(self.rules_start,self.rules_end),[t9a.HEADER_RULES])
             logging.debug(f"Rules headers: {rules_headers}")
             self.set_toc_frame("TOC_Rules", rules_headers, [(1,t9a.TOC_RULES)])
         scribus.docChanged(True)
-
-
-
 
     def remove_footers(self):
         """Removes running footer text frames from pre-determined postion on every page"""
@@ -364,9 +361,9 @@ class ScribusLAB:
         scribus.docChanged(True)
 
     def set_footers(self):
-        self.remove_footers
-        background_headers = self.lab.parse_headers([t9a.HEADER1, t9a.HEADER2])
-        rules_headers = self.lab.parse_headers([t9a.HEADER_RULES])
+        self.remove_footers()
+        background_headers = self.lab.parse_headers_frames([t9a.HEADER1, t9a.HEADER2])
+        rules_headers = self.parse_headings_frames(range(self.rules_start,self.rules_end),[t9a.HEADER_RULES])
         headers = background_headers + rules_headers
         pages = range(8, scribus.pageCount())
 
