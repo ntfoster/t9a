@@ -307,15 +307,17 @@ class ScribusLAB:
 
         while page < scribus.pageCount():
             scribus.gotoPage(page)
-            items = scribus.getPageItems()
+            # items = scribus.getPageItems()
+            items = scribus.getAllObjects(4,layer="Hyperlinks")
+            logging.debug(f"Page {page}: {items}")
             for item in items:
-                pos = scribus.getPosition(item[0])
+                pos = scribus.getPosition(item)
                 # if round(pos[0]) == 20 and round(pos[1]) == 286:
                 if round(pos[0]) in FOOTER_X_LOCS and round(pos[1]) in FOOTER_Y_LOCS:
                 # if round(pos[0]) in [20, 23, 116] and pos[1] // 10 == 28:
-                    if scribus.isLocked(item[0]):
-                        scribus.lockObject(item[0])
-                    scribus.deleteObject(item[0])
+                    if scribus.isLocked(item):
+                        scribus.lockObject(item)
+                    scribus.deleteObject(item)
             page += 1
 
         scribus.setRedraw(True)
@@ -362,14 +364,15 @@ class ScribusLAB:
 
     def set_footers(self):
         self.remove_footers()
-        background_headers = self.lab.parse_headers_frames([t9a.HEADER1, t9a.HEADER2])
+        background_headers = self.lab.parse_headers_frames([t9a.HEADER1])
         rules_headers = self.parse_headings_frames(range(self.rules_start,self.rules_end),[t9a.HEADER_RULES])
         headers = background_headers + rules_headers
         pages = range(8, scribus.pageCount())
 
         scribus.setUnit(scribus.UNIT_MM)
-
+        scribus.setRedraw(False)
         current_layer = scribus.getActiveLayer()
+        scribus.setActiveLayer("Hyperlinks")
         current_header = ""
         for page in pages:
             # don't create footer on page with "blank" master
@@ -379,7 +382,6 @@ class ScribusLAB:
             for x in headers:
                 if x["page"] == page:
                     current_header = x["text"]
-            scribus.setActiveLayer("Hyperlinks")
             if "_UD_" in scribus.getDocName():
                 self.create_footer_UD(page, current_header)
             elif "_SE_" in scribus.getDocName():
@@ -387,6 +389,7 @@ class ScribusLAB:
             else:
                 self.create_footer(page, current_header, y=self.footer_y_pos)
         scribus.setActiveLayer(current_layer)
+        scribus.setRedraw(True)
         scribus.docChanged(True)
 
     def delete_toc_hyperlinks(self):
