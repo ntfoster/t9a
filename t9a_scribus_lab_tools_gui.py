@@ -60,18 +60,8 @@ def export_menu():
         # json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
         json_file = rules_pdf.with_suffix(".json")
         if not Path(json_file).is_file():
-            # print("Not found; Generating")
-            # script_path = Path(__file__).parents[0] / GET_JSON_SCRIPT
-            # python_exe = get_python_path()
-            # current_env = os.environ.copy()
-            # current_env['PYTHONPATH'] = ""  # need to clear out Scribus' pythonpath before calling subprocess to avoid import errors
-            # print(f'running command: "{python_exe}" "{script_path}" "{rules}')
-            # p = subprocess.run(f'"{python_exe}" "{script_path}" "{rules}"', shell=True, env=current_env)
-            # print("Finished running command")
-            # if p.returncode > 0: # if error
-            #     print(p.stderr)
-            scribus.messageBox("Couldn't find JSON file",f"Couldn't fine {json_file}. Please run get_rules_json.py externally and try again")
-            raise FileNotFoundError(f"Couldn't fine {json_file}. Please run get_rules_json.py externally and try again")
+            scribus.messageBox("Couldn't find JSON file",f"Couldn't find {json_file}. Please run get_rules_json.py externally and try again")
+            raise FileNotFoundError(f"Couldn't find {json_file}. Please run get_rules_json.py externally and try again")
         try:
             titles = lab.load_titles_from_json(json_file)
         except Exception as err:
@@ -81,7 +71,6 @@ def export_menu():
         lab.remove_rules_headers()
         lab.add_rules_headers(titles)
         scribus.saveDoc()
-        root.destroy()
 
     def run_script(method,status):
         try:
@@ -91,47 +80,7 @@ def export_menu():
             status.set("Error")
             scribus.messageBox("Error",err)
 
-    def run_h1():
-        try:
-            lab.create_toc_from_text()
-            h1_var.set("Done")
-        except Exception as err:
-            h1_var.set("Error")
-            scribus.messageBox("Error",err)
-
-    def run_h2():
-        try:
-            lab.create_toc_hyperlinks()
-            h2_var.set("Done")
-        except Exception as err:
-            h2_var.set("Error")
-            scribus.messageBox("Error", err)
-
-    def run_h3():
-        try:
-            lab.remove_footers()
-            h3_var.set("Done")
-        except Exception as err:
-            h3_var.set("Error")
-            scribus.messageBox("Error", err)
-
-    def run_h4():
-        try:
-            lab.set_footers()
-            h4_var.set("Done")
-        except Exception as err:
-            h4_var.set("Error")
-            scribus.messageBox("Error", err)
-
-    def run_h5():
-        try:
-            set_rules_headers()
-            h5_var.set("Done")
-        except Exception as err:
-            h5_var.set("Error")
-            scribus.messageBox("Error", err)
-
-    def run_h6():
+    def replace_rules():
         try:
             new_pdf = scribus.fileDialog(
                 "Select slim rules PDF", "PDF Files (*.pdf)", "", haspreview=True)
@@ -141,29 +90,6 @@ def export_menu():
         except Exception as err:
             h6_var.set("Error")
             scribus.messageBox("Error", err)
-
-
-    # helpers.pack(side=tk.TOP)
-    tk.Button(
-        helpers, text="Create Table of Contents", width=20, command=run_h1
-    ).grid(column=0, row=0, sticky="EW")
-
-    tk.Button(
-        helpers,
-        text="Create ToC Hyperlinks",
-        width=20,
-        command=run_h2,
-    ).grid(column=0, row=1, sticky="EW")
-    tk.Button(
-        helpers, text="Remove Footers", width=20, command=run_h3
-    ).grid(column=0, row=2, sticky="EW")
-    tk.Button(helpers, text="Set Footers", width=20,
-              command=run_h4).grid(column=0, row=3, sticky="EW")
-    tk.Button(helpers, text="Set rules headers", width=20,
-              command=run_h5).grid(column=0, row=4, sticky="EW")
-    tk.Button(helpers, text="Replace rules PDF", width=20,
-              command=run_h6).grid(column=0, row=5, sticky="EW")
-
 
     h1_var = tk.StringVar()
     h1_var.set("")
@@ -178,7 +104,21 @@ def export_menu():
     h6_var = tk.StringVar()
     h6_var.set("")
 
-
+    tk.Button(helpers, text="Create Table of Contents", width=20,
+              command=lambda: run_script(lab.create_toc_from_text,h1_var)
+              ).grid(column=0, row=0, sticky="EW")
+    tk.Button(helpers, text="Create ToC Hyperlinks", width=20, 
+              command=lambda: run_script(lab.create_toc_hyperlinks,h2_var),
+              ).grid(column=0, row=1, sticky="EW")
+    tk.Button(helpers, text="Set Footers", width=20, 
+              command=lambda: run_script(lab.set_footers,h3_var)
+              ).grid(column=0, row=2, sticky="EW")
+    tk.Button(helpers, text="Add rules headers", width=20, 
+              command=lambda: run_script(set_rules_headers,h4_var)
+              ).grid(column=0, row=3, sticky="EW")
+    tk.Button(helpers, text="Replace rules PDF", width=20, 
+              command=lambda: run_script(replace_rules,h5_var)
+              ).grid(column=0, row=4, sticky="EW")
 
     h1_status = tk.Label(helpers, textvariable=h1_var).grid(
         column=1, row=0, padx=5, sticky="E")
@@ -190,8 +130,8 @@ def export_menu():
         column=1, row=3, padx=5, sticky="E")
     h5_status = tk.Label(helpers, textvariable=h5_var).grid(
         column=1, row=4, padx=5, sticky="E")
-    h6_status = tk.Label(helpers, textvariable=h6_var).grid(
-        column=1, row=5, padx=5, sticky="E")
+    # h6_status = tk.Label(helpers, textvariable=h6_var).grid(
+    #     column=1, row=5, padx=5, sticky="E")
 
 
     export_options = tk.LabelFrame(
