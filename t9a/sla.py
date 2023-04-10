@@ -1,8 +1,9 @@
 """Contains methods for interacting with the .sla file for a 9th Age Full/Legendary Army Book"""
 
 from pathlib import Path
-
 import xml.etree.ElementTree as ET
+
+from t9a import EXPECTED_FRAMES, EXPECTED_STYLES
 
 VERSION_FRAME = "version_number"
 
@@ -18,8 +19,8 @@ class LABfile:
         self.tree = ET.parse(filename)
         self.root = self.tree.getroot()
 
-    def test_frames(self,frames):
-        '''Tests if a list of frames is present in the document.
+    def test_frames(self,frames=None):
+        '''Tests if a list of frames is present in the document. If frames isn't specified, default list of expected frames is used.
         
         Args:
             frames ([string]): A list of frame names to test
@@ -27,13 +28,15 @@ class LABfile:
         Returns:
             [string]: A list of missing frames    
         '''
+        if frames is None:
+            frames = EXPECTED_FRAMES
         return [
             frame
             for frame in frames
             if self.root.find(f'./DOCUMENT/PAGEOBJECT[@ANNAME="{frame}"]') is None
         ]
     
-    def test_styles(self, styles):
+    def test_styles(self, styles=None):
         """
         Tests if a list of styles exists in the document.
 
@@ -43,6 +46,8 @@ class LABfile:
         Returns:
             [string]: A list of missing styles
         """
+        if styles is None:
+            styles = EXPECTED_STYLES
         return [
             style
             for style in styles
