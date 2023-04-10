@@ -80,18 +80,19 @@ def main():  # sourcery skip: use-fstring-for-concatenation
     tools_column = [
         [sg.Frame("Scribus File", [
             [sg.In(size=50, key='-FILE-', enable_events=True),
-             sg.FileBrowse(target='-FILE-', file_types=(("SLA Files", "*.sla"),)),
-             sg.Button("Open in Scribus", key="-OPEN-SCRIBUS-", disabled=True, size=13)],])],
+             sg.FileBrowse(target='-FILE-', file_types=(("SLA Files", "*.sla"),)),],
+            [sg.Button("Open in Scribus", key="-OPEN-SCRIBUS-", disabled=True, size=13),
+             sg.Button("Check",key="-CHECK-SLA-",disabled=True)]])],
         [sg.Frame("Embedded Rules", [
             [sg.In(size=(50, 1), key="-RULES-", expand_x=True, readonly=True)],
-            [sg.Button("Open PDF", key="-OPEN-OLD-RULES-", disabled=True,),
+            [sg.Button("Open", key="-OPEN-OLD-RULES-", disabled=True,),
+             sg.Button("Parse", key="-PARSE-PDF-", disabled=True,),
              sg.Text("Version:"), sg.Text(key="-OLD-VERSION-", relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
         ], expand_x=True)],
         [sg.Frame("New Rules", [
             [sg.In(size=50, key='-NEW-RULES-', visible=True, enable_events=True),
              sg.FileBrowse(target='-NEW-RULES-',file_types=(("PDF Files", "*.pdf"),))],
             [sg.Button("Open", key="-OPEN-NEW-RULES-", disabled=True,),
-             sg.Button("Parse", key="-PARSE-PDF-", disabled=True,),
              sg.Text("Version:"), sg.Text(key='-NEW-VERSION-', relief=sg.RELIEF_GROOVE, border_width=1, expand_x=True)],
         ])],
         [sg.Frame("Compare and Replace", [
@@ -248,6 +249,8 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             window["-FILE-"].update(filename)
             window["-OPEN-SCRIBUS-"].update(disabled=False)
             window["-OPEN-OLD-RULES-"].update(disabled=False)
+            window["-PARSE-PDF-"].update(disabled=False)
+            window["-CHECK-SLA-"].update(disabled=False)
             window["-RULES-"].update("...")
             rules_pdf = lab.get_embedded_rules()
             window["-RULES-"].update(rules_pdf)
@@ -284,7 +287,9 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 if values[event]:
                     data_selected = [lab_list[row] for row in values[event]]
                     # filename = values['-FILE-LIST-'][0][1]
-                    if filename := Path(data_selected[0][1]):
+                    # if filename := Path(data_selected[0][1]):
+                    if data_selected[0][1]:
+                        filename = Path(data_selected[0][1])
                         if filename.is_file():
                             # window["-FILE-"].update(filename)
                             lab = load_file(filename)
@@ -303,7 +308,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 window["-COMPARE-"].update(disabled=False)
                 window["-REPLACE-"].update(disabled=False)
                 window["-OPEN-NEW-RULES-"].update(disabled=False)
-                window["-PARSE-PDF-"].update(disabled=False)
 
             case "-COMPARE-":
                 rules_pdf = window["-RULES-"].get()
@@ -381,13 +385,24 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 export_menu()
 
             case "-PARSE-PDF-":
+                rules_pdf = Path(window["-RULES-"].get())
                 if filename and filename.is_file():
-                    json_file = filename.parent/(new_pdf.stem+".json")
+                    json_file = filename.parent/(rules_pdf.stem+".json")
                 else:
                     json_file = None
                 print(f"Creating {json_file}")
-                export_titles_to_json(new_pdf,json_file)
-                window["-NEW-VERSION-"].update("Exported")
+                export_titles_to_json(rules_pdf,json_file)
+                window["-OLD-VERSION-"].update("Exported")
+
+            case "-CHECK-SLA-":
+                missing_frames = lab.test_frames()
+                missing_styles = lab.test_styles()
+                if missing_frames or missing_styles:
+                    sg.popup_ok(f"\
+                                Missing Frames: {missing_frames}\n\n\
+                                Missing Styles: {missing_styles}")
+                else:
+                    sg.popup_ok("All expected frames and styles are present.")
 
     window.close()
 
