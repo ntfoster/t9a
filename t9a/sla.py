@@ -207,3 +207,33 @@ class LABfile:
             if mark.get("type") == "3" and mark.get("label") == label:
                 return mark.get("str")
         raise InvalidMarkException(f"{label} is not a valid Mark")
+    
+    def parse_headers_frames(self,header_styles):
+        headers = []
+        elements = self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']")
+        elements = sorted(elements,key=lambda e: (int(e.get("OwnPage")),float(e.get("YPOS"))))
+        for element in elements:
+            page = int(element.get("OwnPage"))+1
+            y_pos = float(element.get("YPOS"))
+            if page > 7:  # after Contents page
+                for storytext in element:
+                    text = None
+                    # is_header = False
+                    s = iter(storytext)
+                    for child in s:
+                        if child.tag == "DefaultStyle" and child.get("PARENT") is not None:
+                            style = child.get("PARENT")
+                        elif child.tag == "MARK":
+                            text = self.lookup_label(child.get("label"))
+                            style = next(s).get("PARENT")
+                        elif child.tag == "ITEXT":
+                            text = child.get("CH")
+                            style = next(s).get("PARENT")
+
+                        if text and style in header_styles:
+                            level = header_styles.index(style)+1
+                            headers.append({"level":level,"text": text, "page": page})
+        return headers
+
+
+

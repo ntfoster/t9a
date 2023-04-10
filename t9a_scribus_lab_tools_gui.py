@@ -93,7 +93,7 @@ def export_menu():
 
     def run_h1():
         try:
-            lab.create_toc()
+            lab.create_toc_from_text()
             h1_var.set("Done")
         except Exception as err:
             h1_var.set("Error")
