@@ -56,10 +56,9 @@ def export_menu():
     helpers.grid(padx=5,pady=5, sticky="EW")
 
     def set_rules_headers():
-        rules_pdf = lab.get_embedded_rules()
-        rules = Path(rules_pdf)
+        rules_pdf = Path(lab.get_embedded_rules())
         # json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
-        json_file = rules.with_suffix(".json")
+        json_file = rules_pdf.with_suffix(".json")
         if not Path(json_file).is_file():
             # print("Not found; Generating")
             # script_path = Path(__file__).parents[0] / GET_JSON_SCRIPT

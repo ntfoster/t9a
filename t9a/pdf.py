@@ -37,12 +37,12 @@ def get_titles(filename,details=False):
     return entries
 
 
-def export_titles_to_json(pdf_file,json_file=None):
+def export_titles_to_json(pdf_file: str, json_file: str = ""):
     """Parses the titles from the given pdf file and creates a JSON file.
 
     Args:
         pdf_file (string): Full filename of rules PDF
-        json_file (_type_, optional): Filename of JSON file to export. If none provided, file is created in same location as PDF.
+        json_file (_type_, optional): Filename of JSON file to export. If none provided, file is created in same location as pdf_file.
 
     Returns:
         List of dictionaries of parsed titles
