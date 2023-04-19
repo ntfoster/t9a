@@ -9,7 +9,7 @@ from t9a import EXPECTED_FRAMES, EXPECTED_STYLES
 VERSION_FRAME = "version_number"
 
 
-class InvalidMarkException(Exception):
+class InvalidMarkError(Exception):
     pass
 
 
@@ -206,7 +206,7 @@ class SLAFile:
         try:
             return self.root.find(f"./DOCUMENT/Marks/Mark[@label='{label}']").get('str')
         except:
-            raise InvalidMarkException(f"{label} is not a valid Mark")
+            raise InvalidMarkError(f"{label} is not a valid Mark")
     
     def parse_headers_from_text_sla(self,header_styles):
         headers = []
