@@ -225,24 +225,43 @@ class LABfile:
                     text = None
                     # is_header = False
                     s = iter(storytext)
-                    style = None
+                    frame_style = style = None
                     for child in s:
                         if child.tag == "DefaultStyle" and child.get("PARENT") is not None:
-                            style = child.get("PARENT")
+                            frame_style = style = child.get("PARENT")
                         elif child.tag == "MARK":
                             text = self.lookup_label(child.get("label"))
-                            para = next(s)
-                            if para.get("PARENT"):
-                                style = para.get("PARENT")
+                            next_node = next(s)
+                            while child.tag in ["ITEXT","breakline"]:
+                                child = next(s)
+                                if child.tag == "ITEXT":
+                                    text += child.get("CH")
+                                if child.tag == "breakline":
+                                    text += " "
+                                if child.tag in ["para","trail"]:
+                                    if child.get("PARENT"):
+                                        style = child.get("PARENT")
+                                    else:
+                                        style = frame_style
                         elif child.tag == "ITEXT":
                             text = child.get("CH")
-                            para = next(s)
-                            if para.get("PARENT"):
-                                style = para.get("PARENT")
+                            while child.tag in ["ITEXT","breakline"]:
+                                child = next(s)
+                                if child.tag == "ITEXT":
+                                    text += child.get("CH")
+                                if child.tag == "breakline":
+                                    text += " "
+                                if child.tag in ["para","trail"]:
+                                    if child.get("PARENT"):
+                                        style = child.get("PARENT")
+                                    else:
+                                        style = frame_style
 
                         if text and style in header_styles:
                             level = header_styles.index(style)+1
                             headers.append({"level":level,"text": text, "page": page})
+                            frame_style = style = None
+                            text = None
         return headers
 
 
