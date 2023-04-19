@@ -18,7 +18,7 @@ import logging
 
 import t9a
 # from t9a import EXPECTED_STYLES, EXPECTED_FRAMES
-from t9a.sla import LABfile
+from t9a.sla import SLAFile
 
 # TODO: test that proper frames exist first
 
@@ -104,7 +104,7 @@ class ScribusLAB:
     def __init__(self):
         logging.debug("Creating ScribusLAB")
         self.filename = scribus.getDocName()
-        self.lab = LABfile(self.filename)
+        self.lab = SLAFile(self.filename)
         self.rules_start = int(scribus.getText('rules_start'))
         self.rules_end = int(scribus.getText("rules_end"))
         logging.debug("Getting Footer Y position")

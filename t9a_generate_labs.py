@@ -8,7 +8,7 @@ import sys
 from parse_toc import parse_file
 from t9a_add_bookmarks import add_bookmarks
 import re
-from t9a.sla import LABfile
+from t9a.sla import SLAFile
 import logging
 
 ### Constants ####
@@ -90,7 +90,7 @@ def rename_file(filename, version):
 
 def process_pdf(input): # parse TOC and create bookmarks
 
-    sla = LABfile(input)
+    sla = SLAFile(input)
     version = sla.get_text("version_number")
 
     files = []

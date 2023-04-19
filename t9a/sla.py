@@ -13,7 +13,7 @@ class InvalidMarkException(Exception):
     pass
 
 
-class LABfile:
+class SLAFile:
 
     def __init__(self, filename):
         self.filename = filename
