@@ -207,11 +207,10 @@ class LABfile:
         return labels
 
     def lookup_label(self,label):
-        marks = self.root.find("./DOCUMENT/Marks")
-        for mark in marks:
-            if mark.get("type") == "3" and mark.get("label") == label:
-                return mark.get("str")
-        raise InvalidMarkException(f"{label} is not a valid Mark")
+        try:
+            return self.root.find(f"./DOCUMENT/Marks/Mark[@label='{label}']").get('str')
+        except:
+            raise InvalidMarkException(f"{label} is not a valid Mark")
     
     def parse_headers_from_text_sla(self,header_styles):
         headers = []
