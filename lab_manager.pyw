@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os.path
 import shutil
 import subprocess
 from json import load
@@ -18,6 +17,8 @@ from t9a import T9A_ICON
 SETTINGS_FILE = Path(__file__).parent / "lab_manager/t9a_lab_manager_settings.json"
 CURRENT_LABS = ["ID", "WDG", "DL", "UD", "SE"]
 
+logging.basicConfig(level=logging.INFO)
+
 
 async def compare_rules(pdf1, pdf2):
     return await asyncio.run(match_titles(pdf1, pdf2))
@@ -27,11 +28,11 @@ async def compare_rules(pdf1, pdf2):
 
 def copy_file(file: Path, directory: Path):
     destination = directory / file.name
-    print(f"Copying {file} to {destination}")
+    logging.info(f"Copying {file} to {destination}")
     try:
         shutil.copy(file, destination)
     except shutil.SameFileError:
-        print("Old file and new file are the same")
+        logging.debug("Old file and new file are the same")
     return destination
 
 
@@ -56,7 +57,7 @@ def update_settings_list(settings, list):
 
 def open_scribus(filename=None):
     if scribus_exe := shutil.which("scribus"):
-        subprocess.Popen([scribus_exe, filename])
+        subprocess.Popen([scribus_exe, "--console", filename])
     else:
         sg.popup_ok("Couldn't launch Scribus. Is it installed and is the scribus executable on your PATH?",
                     title="Couldn't launch Scribus")
@@ -222,13 +223,13 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
                     # for entry in values["-FILE-LIST-"]:
                     #     selected_files.append(lab_list[entry][1])
-                    print(selected_files)
-                    print(qualities)
-                    print(formats)
+                    logging.info(selected_files)
+                    logging.info(qualities)
+                    logging.info(formats)
                     file_list = ""
                     for file in selected_files:
                         file_list += f'"{file}" '
-                    print(file_list)
+                    logging.info(file_list)
                     flags = []
                     if values["-o-noexport-"]:
                         flags.append("--noexport")
@@ -238,9 +239,19 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                         dest = f"--dest {values['-OUT-DIR-']}"
                     else:
                         dest = ""
+
+                    # for filename in selected_files:
+                    #     command = f'python t9a_generate_labs.py "{filename}" --quality {" ".join(qualities)} --formats {" ".join(formats)} {" ".join(flags)} {dest}'
+                    #     logging.info(f"[EXPORT] Running command {command}")
+                    #     subprocess.Popen(command)
+                        # command = sg.execute_command_subprocess("python", "t9a_generate_labs.py", f'"{filename}"', "--quality", ' '.join(qualities),
+                        #                                     "--formats", ' '.join(formats), ' '.join(flags), dest, pipe_output=True)
+                        # # logging.info(f"[EXPORT] Running command {command}")
+                        # logging.info(sg.execute_get_results(command)[0])
+
                     command = sg.execute_command_subprocess("python", "t9a_generate_labs.py", file_list, "--quality", ' '.join(qualities),
                                                             "--formats", ' '.join(formats), ' '.join(flags), dest, pipe_output=True)
-                    print(sg.execute_get_results(command)[0])
+                    logging.info(sg.execute_get_results(command)[0])
 
         window.close()
 
@@ -261,7 +272,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             disable_load()
             return
         except Exception as e:
-            print(e)
+            logging.debug(e)
             window["-RULES-"].update("Error")
         return lab
 
@@ -341,9 +352,9 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 # nopoints = os.path.splitext(new_pdf)[0] + '_nopoints.pdf'
                 nopoints = new_pdf.parent / (new_pdf.stem + '_nopoints.pdf')
                 new_pdf = copy_file(new_pdf, filename.parent / 'images')
-                print(f"checking for nopoints version: {nopoints}")
+                logging.debug(f"checking for nopoints version: {nopoints}")
                 if nopoints.is_file():
-                    print(f"Copying to: {new_pdf.parent / 'images'}")
+                    logging.debug(f"Copying to: {new_pdf.parent / 'images'}")
                     copy_file(nopoints, new_pdf.parent)
                 lab.replace_pdf(new_pdf)
                 rules_pdf = lab.get_embedded_rules()
@@ -379,7 +390,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
             case "-OPEN-SCRIBUS-":
                 filename = Path(values["-FILE-"])
-                print(f"opening {filename} in Scribus")
+                logging.debug(f"opening {filename} in Scribus")
                 open_scribus(filename)
 
             case "-EXPORT-MENU-":
@@ -400,9 +411,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 missing_frames = lab.test_frames()
                 missing_styles = lab.test_styles()
                 if missing_frames or missing_styles:
-                    sg.popup_ok(f"\
-                                Missing Frames: {missing_frames}\n\n\
-                                Missing Styles: {missing_styles}")
+                    sg.popup_ok(f"Missing Frames: {missing_frames}\n\nMissing Styles: {missing_styles}")
                 else:
                     sg.popup_ok("All expected frames and styles are present.")
 

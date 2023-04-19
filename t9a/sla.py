@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import logging
 
 from t9a import EXPECTED_FRAMES, EXPECTED_STYLES
 

@@ -22,8 +22,6 @@ from t9a.sla import LABfile
 
 # TODO: test that proper frames exist first
 
-LOGGING_LEVEL = logging.DEBUG # logging.INFO, logging.WARNING
-
 #####################
 ### FOOTER CONFIG ###
 #####################
@@ -60,8 +58,6 @@ CONTENTS_PAGE = 7
 
 UD_SE_FRAME_WIDTH = 71 # UD/SE books have narrower contents frames
 
-
-logging.basicConfig(level=LOGGING_LEVEL)
 
 def test_frames():
     # pylint: disable=undefined-variable
@@ -309,7 +305,7 @@ class ScribusLAB:
             scribus.gotoPage(page)
             # items = scribus.getPageItems()
             items = scribus.getAllObjects(4,layer="Hyperlinks")
-            logging.debug(f"Page {page}: {items}")
+            # logging.debug(f"Page {page}: {items}")
             for item in items:
                 pos = scribus.getPosition(item)
                 # if round(pos[0]) == 20 and round(pos[1]) == 286:
@@ -428,8 +424,9 @@ class ScribusLAB:
 
         scribus.setUnit(scribus.UNIT_MM)
         scribus.gotoPage(CONTENTS_PAGE)
-
-        def get_toc_pages(frame):
+        
+        
+        def get_toc_entries(frame):
             text = scribus.getAllText(frame)
             paragraphs = text.split('\r')
             pattern = r'.+\t(\d+)'
@@ -441,7 +438,7 @@ class ScribusLAB:
                     pages.append(result[1])
             return pages
 
-        pages = get_toc_pages(frame)
+        pages = get_toc_entries(frame)
         i = 0
         half = int((len(pages)+1)/2)
         frame_pos = scribus.getPosition(frame)
@@ -461,9 +458,10 @@ class ScribusLAB:
                 y_pos = frame_pos[1]+OFFSET  # reset y coord for right column
 
             frame_name = prefix+str(i+1)
-            scribus.createText(x_pos, y_pos, hyperlink_width,
+            new_frame = scribus.createText(x_pos, y_pos, hyperlink_width,
                             FRAME_HEIGHT, frame_name)
-            scribus.setLinkAnnotation(int(pages[i]), 0, 0, frame_name)
+            # logging.debug(f"Setting annotation {new_frame} to page {int(pages[i])}")
+            scribus.setLinkAnnotation(int(pages[i]), 0, 0, new_frame)
             # scribus.lockObject(frame_name)
             links.append(frame_name)
             i += 1
@@ -474,9 +472,9 @@ class ScribusLAB:
         scribus.docChanged(True)
         return links
 
-    
     def create_toc_hyperlinks(self):
-        # self.delete_toc_hyperlinks()
+        current_layer = scribus.getActiveLayer()
+        self.delete_toc_hyperlinks()
         background_links = self.create_hyperlinks(BACKGROUND_TOC_FRAME, 'bh')
         # logging.debug(background_links)
         # group = scribus.groupObjects(background_links)
@@ -484,4 +482,5 @@ class ScribusLAB:
         rules_links = self.create_hyperlinks(RULES_TOC_FRAME, 'rh')
         group = scribus.groupObjects(rules_links)
         scribus.setItemName("rules_links", group)
+        scribus.setActiveLayer(current_layer)
         scribus.docChanged(True)

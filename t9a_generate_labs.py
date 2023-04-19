@@ -9,6 +9,7 @@ from parse_toc import parse_file
 from t9a_add_bookmarks import add_bookmarks
 import re
 from t9a.sla import LABfile
+import logging
 
 ### Constants ####
 HIGH_DPI = 300
@@ -17,6 +18,12 @@ LOW_DPI = 100
 QUALITY_TYPES = ["high","low","print"]
 FORMAT_TYPES = ["full","nopoints","norules"]
 ##################
+
+logging.basicConfig(
+     level=logging.INFO, 
+     format= '[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+     datefmt='%H:%M:%S'
+ )
 
 
 def dir_path(path):
@@ -32,9 +39,9 @@ def run_command(cmd,text=None,details=False):
 
     # if not details:
     #     details = args.details
-    now = datetime.now()
-    time = now.strftime("%H:%M:%S")
-    status = f"{time}: "
+    # now = datetime.now()
+    # time = now.strftime("%H:%M:%S")
+    status = ""
     if text:
         status += f"{text}"
         if details:
@@ -42,7 +49,7 @@ def run_command(cmd,text=None,details=False):
     else:
         status += f" Running: {cmd}"
     # print(f"{time}: Running: {cmd}")
-    print(status)
+    logging.info(status)
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result
 
@@ -152,14 +159,14 @@ def main(argv):
     for f in args.file:
         job = f.name
         if not args.noexport:
-            print("Trying to run scribus")
+            logging.info(f"Opening Scribus with file {job}")
             generate_pdfs(job) # TODO: maybe parallelise
+            logging.info(f"Done with Scribus for file: {job}")
         if not args.noprocess:
+            logging.info(f"Processing file {job}")
             new_files = process_pdf(job)
             if args.dest:
-                now = datetime.now()
-                time = now.strftime("%H:%M:%S")
-                print(f"{time}: Moving files to {args.dest}")
+                print(f"Moving files to {args.dest}")
                 move_pdfs(new_files,args.dest)
 
     # All done

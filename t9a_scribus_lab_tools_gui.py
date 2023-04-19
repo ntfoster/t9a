@@ -1,5 +1,5 @@
 import sys
-
+import logging
 try:
     # Please do not use 'from scribus import *' . If you must use a 'from import',
     # Do so _after_ the 'import scribus' and only import the names you need, such
@@ -19,6 +19,8 @@ from t9a.scribus import ScribusLAB
 
 
 options = {}
+
+logging.basicConfig(level=logging.INFO)
 
 
 def export_menu():
@@ -223,7 +225,7 @@ def export_menu():
 
 def main():
     doc_name = Path(scribus.getDocName())
-    
+    logging.debug("\n\n*******************************\nn)")
     if doc_name.suffix != ".sla":
         scribus.messageBox("File not found", f"{doc_name} is not a valid .sla file. This script should only be run with an open T9A LAB file.")
         return

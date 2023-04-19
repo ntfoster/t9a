@@ -24,7 +24,16 @@ import re
 import datetime
 import shutil
 from pathlib import Path
+import logging
 
+log_path = Path(scribus.getDocName()).parent/f'export {datetime.datetime.now().strftime("%Y-%m-%d %H%M%S") }.log'
+log_path = Path(scribus.getDocName()).parent/'export.log' 
+logging.basicConfig(
+     filename=log_path,
+     level=logging.DEBUG, 
+     format= '[%(asctime)s] %(levelname)s - %(message)s',
+     datefmt='%H:%M:%S'
+ )
 
 QUALITY_TYPES = ["high","low","print"]
 FORMAT_TYPES = ["full","nopoints","norules"]
@@ -188,8 +197,12 @@ def export_pdf(filename,quality):
 
     for p in preset.items():
         setattr(pdf,p[0],p[1])
-    
-    pdf.save()
+    logging.info(f"Exporting {filename}")
+    try:
+        pdf.save()
+    except Exception as err:
+        logging.error(err)
+    logging.debug(f"Compeleted export of {filename}")
             
     # if quality == "high":
     #     # screen 300 dpi settings
@@ -386,8 +399,9 @@ def main(argv):
         no_export = True
     if args.quit:
         interactive = False
-
+    filename = scribus.getDocName()
     export_pdfs(args.formats,args.quality)
+    logging.info(f"Finished exporting all versions of {filename}")
 
 def main_wrapper(argv):
     global interactive
