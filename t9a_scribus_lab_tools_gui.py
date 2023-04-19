@@ -74,6 +74,9 @@ def export_menu():
         lab.add_rules_headers(titles)
         scribus.saveDoc()
 
+    def create_toc():
+        lab.create_toc_from_sla(toc_background.get(),toc_rules.get())
+
     def run_script(method,status):
         try:
             method()
@@ -106,32 +109,45 @@ def export_menu():
     h6_var = tk.StringVar()
     h6_var.set("")
 
+    toc_background = tk.BooleanVar()
+    toc_rules = tk.BooleanVar()
+    toc_background.set(False)
+    toc_rules.set(True)
+
+
+    
+    tocs = tk.Frame(helpers)
+    tocs.grid(column=0,row=0,sticky="EW")
+
+    tk.Checkbutton(tocs, text="BG", variable=toc_background, ).pack(side=tk.LEFT)
+    tk.Checkbutton(tocs, text="Rules", variable=toc_rules, ).pack(side=tk.LEFT)
+
     tk.Button(helpers, text="Create Table of Contents", width=20,
-              command=lambda: run_script(lab.create_toc_from_text,h1_var)
-              ).grid(column=0, row=0, sticky="EW")
+              command=lambda: run_script(create_toc,h1_var)
+              ).grid(column=0, row=1, sticky="EW")
     tk.Button(helpers, text="Create ToC Hyperlinks", width=20, 
               command=lambda: run_script(lab.create_toc_hyperlinks,h2_var),
-              ).grid(column=0, row=1, sticky="EW")
+              ).grid(column=0, row=2, sticky="EW")
     tk.Button(helpers, text="Set Footers", width=20, 
               command=lambda: run_script(lab.set_footers,h3_var)
-              ).grid(column=0, row=2, sticky="EW")
+              ).grid(column=0, row=3, sticky="EW")
     tk.Button(helpers, text="Add rules headers", width=20, 
               command=lambda: run_script(set_rules_headers,h4_var)
-              ).grid(column=0, row=3, sticky="EW")
+              ).grid(column=0, row=4, sticky="EW")
     tk.Button(helpers, text="Replace rules PDF", width=20, 
               command=lambda: run_script(replace_rules,h5_var)
-              ).grid(column=0, row=4, sticky="EW")
+              ).grid(column=0, row=5, sticky="EW")
 
     h1_status = tk.Label(helpers, textvariable=h1_var).grid(
-        column=1, row=0, padx=5, sticky="E")
-    h2_status = tk.Label(helpers, textvariable=h2_var).grid(
         column=1, row=1, padx=5, sticky="E")
-    h3_status = tk.Label(helpers, textvariable=h3_var).grid(
+    h2_status = tk.Label(helpers, textvariable=h2_var).grid(
         column=1, row=2, padx=5, sticky="E")
-    h4_status = tk.Label(helpers, textvariable=h4_var).grid(
+    h3_status = tk.Label(helpers, textvariable=h3_var).grid(
         column=1, row=3, padx=5, sticky="E")
-    h5_status = tk.Label(helpers, textvariable=h5_var).grid(
+    h4_status = tk.Label(helpers, textvariable=h4_var).grid(
         column=1, row=4, padx=5, sticky="E")
+    h5_status = tk.Label(helpers, textvariable=h5_var).grid(
+        column=1, row=5, padx=5, sticky="E")
     # h6_status = tk.Label(helpers, textvariable=h6_var).grid(
     #     column=1, row=5, padx=5, sticky="E")
 
