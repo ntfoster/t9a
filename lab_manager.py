@@ -10,7 +10,7 @@ from xml.etree.ElementTree import ParseError
 import PySimpleGUI as sg
 
 from t9a.pdf import get_version_from_PDF, match_titles, export_titles_to_json
-from t9a.sla import LABfile
+from t9a.sla import SLAFile
 from t9a import T9A_ICON
 
 
@@ -260,7 +260,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
     def load_file(filename):
         try:
-            lab = LABfile(filename)
+            lab = SLAFile(filename)
             window["-FILE-"].update(filename)
             window["-OPEN-SCRIBUS-"].update(disabled=False)
             window["-OPEN-OLD-RULES-"].update(disabled=False)
