@@ -239,7 +239,7 @@ class LABfile:
                         else:
                             text = child.get("CH")
 
-                        while child.tag in ["breakline","ITEXT"]:
+                        while child.tag in ["MARK","breakline","ITEXT"]:
                             child = next(s)
                             if child.tag == "ITEXT":
                                 text += child.get("CH")
