@@ -13,30 +13,11 @@ except ImportError as err:
     print("It can only be run from within Scribus.")
     sys.exit(1)
 
-#########################
-# YOUR IMPORTS GO HERE  #
-#########################
-from t9a.sla import LABfile
+from t9a.scribus import ScribusLAB
 
-def set_toc_frame(frame,headers,style):
-    text = ""
-    for entry in headers:
-        line = f'{entry["text"]}\t{entry["page"]}\n'
-        text += line
-    scribus.setText(text,frame)
-    try:
-        scribus.setParagraphStyle(style,frame)
-    except scribus.NotFoundError:
-        scribus.setParagraphStyle("TOC level 1", frame)
-
-def main(argv):
-    lab = LABfile(scribus.getDocName())
-    
-    background_headers = lab.parse_headers(["HEADER Level 1","HEADER Level 2"])
-    set_toc_frame("TOC_Background",background_headers,"TOC1")
-
-    rules_headers = lab.parse_headers(["HEADER Rules"])
-    set_toc_frame("TOC_Rules",rules_headers,"TOC Rules")
+def main(args):
+    lab = ScribusLAB()
+    lab.create_toc_from_sla(background=True, rules=True)
 
 def main_wrapper(argv):
     """The main_wrapper() function disables redrawing, sets a sensible generic
