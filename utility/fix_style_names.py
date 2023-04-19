@@ -33,6 +33,24 @@ def fix_styles(filename):
             if p_name in style_dict:
                 element.set('PARENT', style_dict[p_name])
                 print(f"PARENT: {p_name} -> {style_dict[p_name]}")
+
+    for element in root.iter('para'):
+        if old_name := element.get('PARENT'):
+            old_name = old_name.lower()
+            if old_name in style_dict:
+                new_name = style_dict[old_name]
+                element.set('PARENT', new_name)
+
+    for element in root.iter('trail'):
+        if old_name := element.get('PARENT'):
+            old_name = old_name.lower()
+            if old_name in style_dict:
+                new_name = style_dict[old_name]
+                element.set('PARENT', new_name)
+
+
+
+    
     tree.write(filename)
 
 
