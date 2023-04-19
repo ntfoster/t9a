@@ -231,8 +231,7 @@ class LABfile:
                             frame_style = style = child.get("PARENT")
                         elif child.tag == "MARK":
                             text = self.lookup_label(child.get("label"))
-                            next_node = next(s)
-                            while child.tag in ["ITEXT","breakline"]:
+                            while child.tag in ["MARK"]:
                                 child = next(s)
                                 if child.tag == "ITEXT":
                                     text += child.get("CH")
