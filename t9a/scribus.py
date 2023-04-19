@@ -467,8 +467,11 @@ class ScribusLAB:
             i += 1
             y_pos = y_pos + FRAME_HEIGHT + FRAME_GAP
         if prefix == "bh":
-            scribus.setItemName("bh_epilogue", frame_name)
-            links[-1] = "bh_epilogue"
+            try:
+                scribus.setItemName("bh_epilogue", frame_name)
+                links[-1] = "bh_epilogue"
+            except UnboundLocalError as err:
+                pass
         scribus.docChanged(True)
         return links
 
