@@ -20,7 +20,7 @@ class SLAFile:
         self.tree = ET.parse(filename)
         self.root = self.tree.getroot()
 
-    def test_frames(self,frames=None):
+    def test_frames(self,frames=EXPECTED_FRAMES):
         '''Tests if a list of frames is present in the document. If frames isn't specified, default list of expected frames is used.
         
         Args:
@@ -29,15 +29,13 @@ class SLAFile:
         Returns:
             [string]: A list of missing frames    
         '''
-        if frames is None:
-            frames = EXPECTED_FRAMES
         return [
             frame
             for frame in frames
             if self.root.find(f'./DOCUMENT/PAGEOBJECT[@ANNAME="{frame}"]') is None
         ]
     
-    def test_styles(self, styles=None):
+    def test_styles(self, styles=EXPECTED_STYLES):
         """
         Tests if a list of styles exists in the document.
 
@@ -47,8 +45,6 @@ class SLAFile:
         Returns:
             [string]: A list of missing styles
         """
-        if styles is None:
-            styles = EXPECTED_STYLES
         return [
             style
             for style in styles
