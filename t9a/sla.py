@@ -214,7 +214,7 @@ class LABfile:
                 return mark.get("str")
         raise InvalidMarkException(f"{label} is not a valid Mark")
     
-    def parse_headers_frames(self,header_styles):
+    def parse_headers_from_text_sla(self,header_styles):
         headers = []
         elements = self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']")
         elements = sorted(elements,key=lambda e: (int(e.get("OwnPage")),float(e.get("YPOS"))))

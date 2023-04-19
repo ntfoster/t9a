@@ -276,17 +276,17 @@ class ScribusLAB:
 
     def create_toc(self,background=True,rules=True):
         if background:
-            background_headers = self.lab.parse_headers_multilevel([(1,t9a.HEADER1), (2,t9a.HEADER2)])
-            background_headers = self.parse_headings_frames(range(8,scribus.pageCount()))
+            # background_headers = self.lab.parse_headers_multilevel([(1,t9a.HEADER1), (2,t9a.HEADER2)])
+            background_headers = self.parse_headings_frames(range(8,scribus.pageCount()),[t9a.HEADER1,t9a.HEADER2])
             self.set_toc_frame("TOC_Background", background_headers, [(1,t9a.TOC1),(2,t9a.TOC2)])
         if rules:
             rules_headers = self.lab.parse_headers_multilevel([(1,t9a.HEADER_RULES)])
             self.set_toc_frame("TOC_Rules", rules_headers, [(1,t9a.TOC_RULES)])
         scribus.docChanged(True)
 
-    def create_toc_from_text(self,background=True, rules=True):
+    def create_toc_from_sla(self,background=True, rules=True):
         if background:
-            background_headers = self.lab.parse_headers_frames([t9a.HEADER1,t9a.HEADER2])
+            background_headers = self.lab.parse_headers_from_text_sla([t9a.HEADER1,t9a.HEADER2])
             logging.debug(f"Background headers: {background_headers}")
             self.set_toc_frame("TOC_Background", background_headers, [(1,t9a.TOC1),(2,t9a.TOC2)])
         if rules:
@@ -360,7 +360,7 @@ class ScribusLAB:
 
     def set_footers(self):
         self.remove_footers()
-        background_headers = self.lab.parse_headers_frames([t9a.HEADER1])
+        background_headers = self.lab.parse_headers_from_text_sla([t9a.HEADER1])
         rules_headers = self.parse_headings_frames(range(self.rules_start,self.rules_end),[t9a.HEADER_RULES])
         headers = background_headers + rules_headers
         pages = range(8, scribus.pageCount())
