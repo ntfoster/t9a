@@ -220,21 +220,25 @@ class LABfile:
         elements = sorted(elements,key=lambda e: (int(e.get("OwnPage")),float(e.get("YPOS"))))
         for element in elements:
             page = int(element.get("OwnPage"))+1
-            y_pos = float(element.get("YPOS"))
             if page > 7:  # after Contents page
                 for storytext in element:
                     text = None
                     # is_header = False
                     s = iter(storytext)
+                    style = None
                     for child in s:
                         if child.tag == "DefaultStyle" and child.get("PARENT") is not None:
                             style = child.get("PARENT")
                         elif child.tag == "MARK":
                             text = self.lookup_label(child.get("label"))
-                            style = next(s).get("PARENT")
+                            para = next(s)
+                            if para.get("PARENT"):
+                                style = para.get("PARENT")
                         elif child.tag == "ITEXT":
                             text = child.get("CH")
-                            style = next(s).get("PARENT")
+                            para = next(s)
+                            if para.get("PARENT"):
+                                style = para.get("PARENT")
 
                         if text and style in header_styles:
                             level = header_styles.index(style)+1
