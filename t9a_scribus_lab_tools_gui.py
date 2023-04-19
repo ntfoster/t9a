@@ -69,7 +69,7 @@ def export_menu():
         except Exception as err:
             scribus.messageBox("Error loading JSON file", err)
             return
-            
+
         lab.remove_rules_headers()
         lab.add_rules_headers(titles)
         scribus.saveDoc()
@@ -115,7 +115,7 @@ def export_menu():
     toc_rules.set(True)
 
 
-    
+
     tocs = tk.Frame(helpers)
     tocs.grid(column=0,row=0,sticky="EW")
 
@@ -203,6 +203,10 @@ def export_menu():
     def export():
         global options
 
+        if nopoints.get() and not lab.check_nopoints():
+            scribus.messageBox("Nopoints file missing","Couldn't find nopoints version of the rules. Make sure _nopoints PDF is in the images folder before trying again.")
+            return
+        
         qualities = []
         if high.get():
             qualities.append("high")

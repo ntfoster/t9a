@@ -487,3 +487,14 @@ class ScribusLAB:
         scribus.setItemName("rules_links", group)
         scribus.setActiveLayer(current_layer)
         scribus.docChanged(True)
+
+    def check_nopoints(self):
+        """Checks if nopoints version of the embedded rules PDF exists in the correct folder
+
+        Returns:
+            bool: True if file exists, else False
+        """
+        rules = Path(self.get_embedded_rules())
+        nopoints = rules.with_name(f"{rules.stem}_nopoints.pdf")
+        return Path(nopoints).is_file()
+

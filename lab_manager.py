@@ -217,6 +217,9 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                     if values["-o-full-"]:
                         formats.append("full")
                     if values["-o-nopoints-"]:
+                        if not lab.check_nopoints():
+                            sg.popup_ok("Couldn't find nopoints version of the rules. Please make sure _nopoints PDF is in the images folder.")
+                            return
                         formats.append("nopoints")
                     if values["-o-norules-"]:
                         formats.append("norules")

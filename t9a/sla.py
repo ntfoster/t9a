@@ -263,5 +263,14 @@ class LABfile:
                             text = None
         return headers
 
+    def check_nopoints(self):
+        """Checks if nopoints version of the embedded rules PDF exists in the correct folder
+
+        Returns:
+            bool: True if file exists, else False
+        """
+        rules = self.get_embedded_rules()
+        nopoints = rules.with_name(f"{rules.stem}_nopoints.pdf")
+        return Path(nopoints).is_file()
 
 
