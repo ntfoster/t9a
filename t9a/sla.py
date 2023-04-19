@@ -4,9 +4,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import logging
 
-from t9a import EXPECTED_FRAMES, EXPECTED_STYLES
-
-VERSION_FRAME = "version_number"
+from t9a import EXPECTED_FRAMES, EXPECTED_STYLES, VERSION_FRAME
 
 
 class InvalidMarkError(Exception):
@@ -51,7 +49,6 @@ class SLAFile:
             if self.root.find(f'./DOCUMENT/STYLE[@NAME="{style}"]') is None
         ]
 
-    
     def get_layer_number(self,layer):
         """Returns layer number for the given layer name
 
@@ -76,7 +73,6 @@ class SLAFile:
             if "PFILE" in element.attrib and element.get("PFILE")[-4:] == ".pdf":
                 element.set("PFILE",str(new_pdf))
         if output_file:
-            print(f'Writing to file: {output_file}')
             self.tree.write(output_file)
         else:
             self.tree.write(self.filename)
@@ -90,6 +86,7 @@ class SLAFile:
         Returns:
             string: Content of text frame
         """
+        # TODO: Get all text in cases of multiple ITEXT nodes
         element = self.root.find(f'./DOCUMENT/PAGEOBJECT[@ANNAME="{frame}"]')
         text_box = element.find('StoryText').find('ITEXT')
         return text_box.get('CH')
@@ -105,7 +102,7 @@ class SLAFile:
         current_version = version_text_box.get('CH')
         version_text_box.set('CH', version)
         self.tree.write(self.filename)
-        print(f"{self.filename}: Changed {current_version} to {version}")
+        logging.info(f"{self.filename}: Changed {current_version} to {version}")
 
     def get_embedded_rules(self):
         """Returns the full path of the embedded rules PDF
@@ -113,8 +110,7 @@ class SLAFile:
         Returns:
             Path: Full path to embedded rules PDF
         """        
-        filepath = Path(self.filename)
-        sla_dir = filepath.parent
+        sla_dir = Path(self.filename).parent
         rules_layer = self.get_layer_number("Rules")
         element = self.root.find(f'./DOCUMENT/PAGEOBJECT[@LAYER="{rules_layer}"]')
         if element.get("PFILE")[-4:] == ".pdf":
@@ -145,7 +141,7 @@ class SLAFile:
                             text = None
                             if child.tag == "MARK":
                                 label = child.get("label")
-                                text = self.lookup_label(label)
+                                text = self.lookup_variable_text(label)
                             elif child.tag == "ITEXT":
                                 text = child.get("CH")
                             if text: 
@@ -182,7 +178,7 @@ class SLAFile:
                             text = None
                             if child.tag == "MARK":
                                 label = child.get("label")
-                                text = self.lookup_label(label)
+                                text = self.lookup_variable_text(label)
                             elif child.tag == "ITEXT":
                                 text = child.get("CH")
                             if text:
@@ -202,13 +198,32 @@ class SLAFile:
 
         return labels
 
-    def lookup_label(self,label):
+    def lookup_variable_text(self,label):
+        """Lookup text value of Variable Text mark
+
+        Args:
+            label (str): Label of Variable Text mark
+
+        Raises:
+            InvalidMarkError: No mark with the given label could be found
+
+        Returns:
+            str: Value of the Variable Text mark
+        """
         try:
             return self.root.find(f"./DOCUMENT/Marks/Mark[@label='{label}']").get('str')
         except:
             raise InvalidMarkError(f"{label} is not a valid Mark")
     
     def parse_headers_from_text_sla(self,header_styles):
+        """Searches every text frame for test formatted with the given styles and returns list of corresponding headings
+
+        Args:
+            header_styles ([str]): List of style names in hierarchical order (e.g. ["HEADER Level 1", "HEADER Level 2"])
+
+        Returns:
+            dict[level,text,page]: list of {"level":int, "text":str, "page":int} header entries
+        """
         headers = []
         elements = sorted(self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"), key=lambda e: (int(e.get("OwnPage")), float(e.get("YPOS"))))
 
@@ -230,7 +245,7 @@ class SLAFile:
                         frame_style = style = child.get("PARENT")
                     elif child.tag in ["MARK","ITEXT"]:
                         if child.tag == "MARK":
-                            text = self.lookup_label(child.get("label"))
+                            text = self.lookup_variable_text(child.get("label"))
                         else:
                             text = child.get("CH")
 

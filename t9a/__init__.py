@@ -1,5 +1,7 @@
 EXPECTED_FRAMES = ["rules_start", "rules_end", "epilogue_page", "edition", "version_number", "full_title", "norules_title", "nopoints_title", "rules_links"]
 
+VERSION_FRAME = "version_number"
+
 #####################
 ### STYLE CONFIG ###
 #####################
