@@ -199,7 +199,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
         while True:
             event, values = window.read()
             match event:
-
                 case "Exit" | sg.WIN_CLOSED:
                     break
 
@@ -216,15 +215,17 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                     if values["-o-full-"]:
                         formats.append("full")
                     if values["-o-nopoints-"]:
-                        if not lab.check_nopoints():
-                            sg.popup_ok("Couldn't find nopoints version of the rules. Please make sure _nopoints PDF is in the images folder.")
-                            return
                         formats.append("nopoints")
                     if values["-o-norules-"]:
                         formats.append("norules")
 
-                    # for entry in values["-FILE-LIST-"]:
-                    #     selected_files.append(lab_list[entry][1])
+                    # TODO: preflight selected files
+                    for file in selected_files:
+                        lab = SLAFile(file)
+                        if "nopoints" in formats and not lab.check_nopoints():
+                            sg.popup_ok(f"Couldn't find nopoints version of the rules for file: {file}. Please make sure _nopoints PDF is in the images folder.")
+                            return
+
                     logging.info(selected_files)
                     logging.info(qualities)
                     logging.info(formats)
@@ -241,18 +242,19 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                         dest = f"--dest {values['-OUT-DIR-']}"
                     else:
                         dest = ""
-
-                    # for filename in selected_files:
-                    #     command = f'python t9a_generate_labs.py "{filename}" --quality {" ".join(qualities)} --formats {" ".join(formats)} {" ".join(flags)} {dest}'
-                    #     logging.info(f"[EXPORT] Running command {command}")
-                    #     subprocess.Popen(command)
-                        # command = sg.execute_command_subprocess("python", "t9a_generate_labs.py", f'"{filename}"', "--quality", ' '.join(qualities),
-                        #                                     "--formats", ' '.join(formats), ' '.join(flags), dest, pipe_output=True)
-                        # # logging.info(f"[EXPORT] Running command {command}")
-                        # logging.info(sg.execute_get_results(command)[0])
-
-                    command = sg.execute_command_subprocess("python", "t9a_generate_labs.py", file_list, "--quality", ' '.join(qualities),
-                                                            "--formats", ' '.join(formats), ' '.join(flags), dest, pipe_output=True)
+                    # TODO: full path for generate script
+                    command = sg.execute_command_subprocess(
+                        "python",
+                        "t9a_generate_labs.py",
+                        file_list,
+                        "--quality",
+                        ' '.join(qualities),
+                        "--formats",
+                        ' '.join(formats),
+                        ' '.join(flags),
+                        dest,
+                        pipe_output=True,
+                    )
                     logging.info(sg.execute_get_results(command)[0])
 
         window.close()
