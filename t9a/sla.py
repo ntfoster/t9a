@@ -260,6 +260,7 @@ class SLAFile:
 
                     if text and style in header_styles:
                         level = header_styles.index(style)+1
+                        text = text.replace('\u00ad', '') # remove hidden soft hyphens
                         headers.append({"level":level,"text": text, "page": page})
                         frame_style = style = None
                         text = None
@@ -274,5 +275,4 @@ class SLAFile:
         rules = self.get_embedded_rules()
         nopoints = rules.with_name(f"{rules.stem}_nopoints.pdf")
         return Path(nopoints).is_file()
-
 
