@@ -10,7 +10,7 @@ from xml.etree.ElementTree import ParseError
 import PySimpleGUI as sg
 
 from t9a.pdf import get_version_from_PDF, match_titles, export_titles_to_json
-from t9a.sla import LABfile
+from t9a.sla import SLAFile
 from t9a import T9A_ICON
 
 
@@ -145,7 +145,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             return result
 
     def export_menu():
-        # TODO: Check for _nopoints.pdf files before exporting No Points version
         quality_options = [
             [sg.Checkbox("High", default=True, key="-o-high-")],
             [sg.Checkbox("Low", default=True, key="-o-low-")],
@@ -260,7 +259,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
     def load_file(filename):
         try:
-            lab = LABfile(filename)
+            lab = SLAFile(filename)
             window["-FILE-"].update(filename)
             window["-OPEN-SCRIBUS-"].update(disabled=False)
             window["-OPEN-OLD-RULES-"].update(disabled=False)
@@ -287,8 +286,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
     while True:
         event, values = window.read()
-        # TODO: change to match->case switch statement
-
         match event:
 
             case "Exit" | sg.WIN_CLOSED:
@@ -332,7 +329,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 window['-RESULT-'].update("Matching...")
 
                 try:
-                    # TODO: parrallise
+                    # TODO: parrallelise
                     match = match_titles(rules_pdf, new_pdf)
                     if match:
                         window['-RESULT-'].update(

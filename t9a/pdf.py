@@ -1,9 +1,10 @@
-'''Contains functions to analyse Slim Rules PDFs'''
+'''Contains functions to analyse and manipulate both T9A slim rules PDFs and exported Full Army Books'''
 import re
-import sys
 import os
 import json
 from pathlib import Path
+
+from pypdf import PdfWriter, PdfReader
 from py_pdf_parser.loaders import load_file
 
 
@@ -87,3 +88,40 @@ def get_version_from_PDF(pdf):
         raise ValueError(f"Filename '{filename}' was not in an expected format")
     version_list = [r for r in result.groups() if r]
     return " ".join(version_list)
+
+def add_bookmarks_to_pdf(filename, bookmarks, output_filename):
+    with open(filename, 'rb+') as pdf_file:
+        input_pdf = PdfReader(pdf_file)
+        output = PdfWriter()
+        
+        output.clone_document_from_reader(input_pdf)
+        output.add_metadata(input_pdf.metadata)
+        output.page_mode = "/UseOutlines" # Show Bookmarks
+
+    # TODO: Rewrite with recursion when my brain is less tired.
+
+    l0_mark = None
+    l1_mark = None
+    l2_mark = None
+    for mark in bookmarks:
+        if int(mark['level']) == 0:
+            l0_mark = output.add_outline_item(mark['text'], int(mark['page'])-1)
+        elif mark['level'] == 1:
+            l1_mark = output.add_outline_item(mark['text'], int(mark['page'])-1, l0_mark)
+        elif mark['level'] == 2:
+            l2_mark = output.add_outline_item(mark['text'], int(mark['page'])-1, l1_mark)
+    
+    ### Have to use a temporary file because input file apparantly needs to stay open while output is written, otherwise you get a blank file
+    temp_file = f"{filename}.temp"
+    with open(temp_file, 'wb') as pdf_file:
+        output.write(pdf_file)
+
+    if output_filename:
+        try:
+            os.remove(output_filename)
+        except FileNotFoundError:
+            pass
+        os.rename(temp_file,output_filename)
+    else:
+        os.remove(filename)
+        os.rename(temp_file, filename)

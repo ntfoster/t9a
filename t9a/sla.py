@@ -4,23 +4,21 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import logging
 
-from t9a import EXPECTED_FRAMES, EXPECTED_STYLES
-
-VERSION_FRAME = "version_number"
+from t9a import EXPECTED_FRAMES, EXPECTED_STYLES, VERSION_FRAME
 
 
-class InvalidMarkException(Exception):
+class InvalidMarkError(Exception):
     pass
 
 
-class LABfile:
+class SLAFile:
 
     def __init__(self, filename):
         self.filename = filename
         self.tree = ET.parse(filename)
         self.root = self.tree.getroot()
 
-    def test_frames(self,frames=None):
+    def test_frames(self,frames=EXPECTED_FRAMES):
         '''Tests if a list of frames is present in the document. If frames isn't specified, default list of expected frames is used.
         
         Args:
@@ -29,15 +27,13 @@ class LABfile:
         Returns:
             [string]: A list of missing frames    
         '''
-        if frames is None:
-            frames = EXPECTED_FRAMES
         return [
             frame
             for frame in frames
             if self.root.find(f'./DOCUMENT/PAGEOBJECT[@ANNAME="{frame}"]') is None
         ]
     
-    def test_styles(self, styles=None):
+    def test_styles(self, styles=EXPECTED_STYLES):
         """
         Tests if a list of styles exists in the document.
 
@@ -47,15 +43,12 @@ class LABfile:
         Returns:
             [string]: A list of missing styles
         """
-        if styles is None:
-            styles = EXPECTED_STYLES
         return [
             style
             for style in styles
             if self.root.find(f'./DOCUMENT/STYLE[@NAME="{style}"]') is None
         ]
 
-    
     def get_layer_number(self,layer):
         """Returns layer number for the given layer name
 
@@ -80,7 +73,6 @@ class LABfile:
             if "PFILE" in element.attrib and element.get("PFILE")[-4:] == ".pdf":
                 element.set("PFILE",str(new_pdf))
         if output_file:
-            print(f'Writing to file: {output_file}')
             self.tree.write(output_file)
         else:
             self.tree.write(self.filename)
@@ -94,6 +86,7 @@ class LABfile:
         Returns:
             string: Content of text frame
         """
+        # TODO: Get all text in cases of multiple ITEXT nodes
         element = self.root.find(f'./DOCUMENT/PAGEOBJECT[@ANNAME="{frame}"]')
         text_box = element.find('StoryText').find('ITEXT')
         return text_box.get('CH')
@@ -109,7 +102,7 @@ class LABfile:
         current_version = version_text_box.get('CH')
         version_text_box.set('CH', version)
         self.tree.write(self.filename)
-        print(f"{self.filename}: Changed {current_version} to {version}")
+        logging.info(f"{self.filename}: Changed {current_version} to {version}")
 
     def get_embedded_rules(self):
         """Returns the full path of the embedded rules PDF
@@ -117,8 +110,7 @@ class LABfile:
         Returns:
             Path: Full path to embedded rules PDF
         """        
-        filepath = Path(self.filename)
-        sla_dir = filepath.parent
+        sla_dir = Path(self.filename).parent
         rules_layer = self.get_layer_number("Rules")
         element = self.root.find(f'./DOCUMENT/PAGEOBJECT[@LAYER="{rules_layer}"]')
         if element.get("PFILE")[-4:] == ".pdf":
@@ -132,7 +124,6 @@ class LABfile:
         Returns:
             list: A list of {text:string, page:int} dictionaries
         """        
-        # TODO: Parse styles applied at text-level as well as frame-level.
         entries = []
         for element in self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
             page = int(element.get("OwnPage"))+1 # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers 
@@ -149,7 +140,7 @@ class LABfile:
                             text = None
                             if child.tag == "MARK":
                                 label = child.get("label")
-                                text = self.lookup_label(label)
+                                text = self.lookup_variable_text(label)
                             elif child.tag == "ITEXT":
                                 text = child.get("CH")
                             if text: 
@@ -165,7 +156,6 @@ class LABfile:
         Returns:
             list: A list of {"level": int, "text":string, "page":int} dictionaries
         """
-        # TODO: Parse styles applied at text-level as well as frame-level.
         entries = []
         for element in self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"):
             # Scribus interal page numbers start at 0, so are 1 less than 'real' page numbers
@@ -186,7 +176,7 @@ class LABfile:
                             text = None
                             if child.tag == "MARK":
                                 label = child.get("label")
-                                text = self.lookup_label(label)
+                                text = self.lookup_variable_text(label)
                             elif child.tag == "ITEXT":
                                 text = child.get("CH")
                             if text:
@@ -205,62 +195,73 @@ class LABfile:
                         entry["text"] = mark.get("str")
 
         return labels
-    
 
-    def lookup_label(self,label):
-        marks = self.root.find("./DOCUMENT/Marks")
-        for mark in marks:
-            if mark.get("type") == "3" and mark.get("label") == label:
-                return mark.get("str")
-        raise InvalidMarkException(f"{label} is not a valid Mark")
+    def lookup_variable_text(self,label):
+        """Lookup text value of Variable Text mark
+
+        Args:
+            label (str): Label of Variable Text mark
+
+        Raises:
+            InvalidMarkError: No mark with the given label could be found
+
+        Returns:
+            str: Value of the Variable Text mark
+        """
+        try:
+            return self.root.find(f"./DOCUMENT/Marks/Mark[@label='{label}']").get('str')
+        except:
+            raise InvalidMarkError(f"{label} is not a valid Mark")
     
     def parse_headers_from_text_sla(self,header_styles):
+        """Searches every text frame for test formatted with the given styles and returns list of corresponding headings
+
+        Args:
+            header_styles ([str]): List of style names in hierarchical order (e.g. ["HEADER Level 1", "HEADER Level 2"])
+
+        Returns:
+            dict[level,text,page]: list of {"level":int, "text":str, "page":int} header entries
+        """
         headers = []
-        elements = self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']")
-        elements = sorted(elements,key=lambda e: (int(e.get("OwnPage")),float(e.get("YPOS"))))
+        elements = sorted(self.root.findall("./DOCUMENT/PAGEOBJECT[@PTYPE='4']"), key=lambda e: (int(e.get("OwnPage")), float(e.get("YPOS"))))
+
         for element in elements:
             page = int(element.get("OwnPage"))+1
-            if page > 7:  # after Contents page
-                for storytext in element:
-                    text = None
-                    # is_header = False
-                    s = iter(storytext)
-                    frame_style = style = None
-                    for child in s:
-                        if child.tag == "DefaultStyle" and child.get("PARENT") is not None:
-                            frame_style = style = child.get("PARENT")
-                        elif child.tag == "MARK":
-                            text = self.lookup_label(child.get("label"))
-                            while child.tag in ["MARK"]:
-                                child = next(s)
-                                if child.tag == "ITEXT":
-                                    text += child.get("CH")
-                                if child.tag == "breakline":
-                                    text += " "
-                                if child.tag in ["para","trail"]:
-                                    if child.get("PARENT"):
-                                        style = child.get("PARENT")
-                                    else:
-                                        style = frame_style
-                        elif child.tag == "ITEXT":
-                            text = child.get("CH")
-                            while child.tag in ["ITEXT","breakline"]:
-                                child = next(s)
-                                if child.tag == "ITEXT":
-                                    text += child.get("CH")
-                                if child.tag == "breakline":
-                                    text += " "
-                                if child.tag in ["para","trail"]:
-                                    if child.get("PARENT"):
-                                        style = child.get("PARENT")
-                                    else:
-                                        style = frame_style
 
-                        if text and style in header_styles:
-                            level = header_styles.index(style)+1
-                            headers.append({"level":level,"text": text, "page": page})
-                            frame_style = style = None
-                            text = None
+            if page <= 7: # before or on Contents page
+                continue
+
+            for storytext in element:
+                text = None
+                style = None
+                frame_style = None
+                
+                s = iter(storytext)
+                for child in s:
+
+                    if child.tag == "DefaultStyle" and child.get("PARENT") is not None:
+                        frame_style = style = child.get("PARENT")
+                    elif child.tag in ["MARK","ITEXT"]:
+                        if child.tag == "MARK":
+                            text = self.lookup_variable_text(child.get("label"))
+                        else:
+                            text = child.get("CH")
+
+                        while child.tag in ["MARK","breakline","ITEXT"]:
+                            child = next(s)
+                            if child.tag == "ITEXT":
+                                text += child.get("CH")
+                            elif child.tag == "breakline":
+                                text += " "
+                            elif child.tag in ["para","trail"]:
+                                style = child.get("PARENT") or frame_style
+
+                    if text and style in header_styles:
+                        level = header_styles.index(style)+1
+                        text = text.replace('\u00ad', '') # remove hidden soft hyphens
+                        headers.append({"level":level,"text": text, "page": page})
+                        frame_style = style = None
+                        text = None
         return headers
 
     def check_nopoints(self):
@@ -272,5 +273,4 @@ class LABfile:
         rules = self.get_embedded_rules()
         nopoints = rules.with_name(f"{rules.stem}_nopoints.pdf")
         return Path(nopoints).is_file()
-
 
