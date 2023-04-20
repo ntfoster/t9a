@@ -91,6 +91,7 @@ def rename_file(filename, version):
         print(f"Invalid file name: {f}")
 
 def get_bookmarks(sla_file: SLAFile, include_rules: bool=True):
+    # TODO: move into package
     custom_bookmarks = [{"level":"0", "text":"Cover", "page":"1"},{"level":"0", "text":"Credits", "page":"4"},{"level":"0","text":"Contents","page":"7"}] #TODO: parameterise and split into function calls
 
     background_headers = sla_file.parse_headers_from_text_sla([t9a.HEADER1,t9a.HEADER2])
@@ -133,11 +134,12 @@ def process_pdf(input): # parse TOC and create bookmarks
     files = []
     if "high" or "low" in args.quality:
         if "full" or "nopoints" in args.formats:
-            full_bookmarks = parse_file(input,rules=True)
+            full_bookmarks = get_bookmarks(sla, include_rules=True)
         if "norules" in args.formats:
             input_norules = str(Path(input).parents[0] / Path(input).stem) + "_norules.sla"
-            print(f"parsing: {input_norules}")
-            norules_bookmarks = parse_file(input_norules, rules=False)
+            logging.info(f"Getting bookmarks from: {input_norules}")
+            norules_sla = SLAFile(input_norules)
+            norules_bookmarks = get_bookmarks(norules_sla, include_rules=False)
 
         for q in args.quality:
             for f in args.formats:

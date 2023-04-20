@@ -89,7 +89,7 @@ def get_version_from_PDF(pdf):
     version_list = [r for r in result.groups() if r]
     return " ".join(version_list)
 
-def add_bookmarks_to_pdf(filename, bookmarks, output_filename):
+def add_bookmarks_to_pdf(filename, bookmarks, output_filename=None):
     with open(filename, 'rb+') as pdf_file:
         input_pdf = PdfReader(pdf_file)
         output = PdfWriter()
