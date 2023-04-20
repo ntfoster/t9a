@@ -14,7 +14,7 @@ import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
 
-from t9a_export_pdfs import export_pdfs
+from t9a_export_pdfs import export_pdfs # TODO: move export to package
 from t9a.scribus import ScribusLAB
 
 

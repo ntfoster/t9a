@@ -145,7 +145,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             return result
 
     def export_menu():
-        # TODO: Check for _nopoints.pdf files before exporting No Points version
         quality_options = [
             [sg.Checkbox("High", default=True, key="-o-high-")],
             [sg.Checkbox("Low", default=True, key="-o-low-")],
@@ -287,8 +286,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
     while True:
         event, values = window.read()
-        # TODO: change to match->case switch statement
-
         match event:
 
             case "Exit" | sg.WIN_CLOSED:
@@ -332,7 +329,7 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 window['-RESULT-'].update("Matching...")
 
                 try:
-                    # TODO: parrallise
+                    # TODO: parrallelise
                     match = match_titles(rules_pdf, new_pdf)
                     if match:
                         window['-RESULT-'].update(

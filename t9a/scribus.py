@@ -20,8 +20,6 @@ import t9a
 # from t9a import EXPECTED_STYLES, EXPECTED_FRAMES
 from t9a.sla import SLAFile
 
-# TODO: test that proper frames exist first
-
 #####################
 ### FOOTER CONFIG ###
 #####################
