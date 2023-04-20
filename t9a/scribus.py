@@ -57,22 +57,6 @@ CONTENTS_PAGE = 7
 UD_SE_FRAME_WIDTH = 71 # UD/SE books have narrower contents frames
 
 
-def test_frames():
-    # pylint: disable=undefined-variable
-    missing_frames = []
-    try:
-        scribus.deselectAll()
-        for frame in t9a.EXPECTED_FRAMES:
-            try:
-                scribus.selectObject(frame)
-            except:
-                missing_frames.append(frame)
-        if missing_frames:
-            raise Exception(f"The following expected text frames are missing: {' ,'.join(missing_frames)}.")
-    except Exception as err:
-        scribus.messageBox("Missing frames", str(err), scribus.ICON_CRITICAL)
-
-
 def load_titles_from_json(cls,filename):
     import json
     with open(filename) as json_file:
@@ -115,6 +99,22 @@ class ScribusLAB:
         missing_styles = [style for style in t9a.EXPECTED_STYLES if style not in doc_styles]
         if missing_styles:
             return(missing_styles)
+        
+    def test_frames():
+        # pylint: disable=undefined-variable
+        missing_frames = []
+        try:
+            scribus.deselectAll()
+            for frame in t9a.EXPECTED_FRAMES:
+                try:
+                    scribus.selectObject(frame)
+                except:
+                    missing_frames.append(frame)
+            if missing_frames:
+                raise Exception(f"The following expected text frames are missing: {' ,'.join(missing_frames)}.")
+        except Exception as err:
+            scribus.messageBox("Missing frames", str(err), scribus.ICON_CRITICAL)
+
 
     def remove_rules_headers(self):
         current_layer = scribus.getActiveLayer()
