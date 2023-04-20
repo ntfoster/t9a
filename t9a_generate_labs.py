@@ -5,11 +5,13 @@ import argparse
 from datetime import datetime
 import shutil
 import sys
-from parse_toc import parse_file
-from t9a_add_bookmarks import add_bookmarks
 import re
-from t9a.sla import SLAFile
 import logging
+
+import t9a
+from t9a.sla import SLAFile
+from t9a.pdf import add_bookmarks_to_pdf
+
 
 ### Constants ####
 HIGH_DPI = 300
@@ -88,6 +90,41 @@ def rename_file(filename, version):
     else:
         print(f"Invalid file name: {f}")
 
+def get_bookmarks(sla_file: SLAFile, include_rules: bool=True):
+    custom_bookmarks = [{"level":"0", "text":"Cover", "page":"1"},{"level":"0", "text":"Credits", "page":"4"},{"level":"0","text":"Contents","page":"7"}] #TODO: parameterise and split into function calls
+
+    background_headers = sla_file.parse_headers_from_text_sla([t9a.HEADER1,t9a.HEADER2])
+    rules_headers = sla_file.parse_headers_from_text_sla([t9a.HEADER_RULES])
+        
+    # for entry in background_headers + rules_headers:
+    #     entry['level'] += 1
+    
+    background_entry = [{"level":0, "text":"Background", "page":background_headers[0]['page']}]
+    rules_entry = [{"level":0, "text":"Rules", "page":rules_headers[0]['page']}]
+
+    bookmarks = custom_bookmarks + background_entry + background_headers + rules_entry + rules_headers
+
+    return bookmarks
+
+
+    # if not rules:
+    #     labels_background = parse_toc(background_toc_frame)
+    #     # need to make background headers top-level rather than children
+    #     for label in labels_background:
+    #         label["level"] = label["level"]-1
+    #     labels = custom_bookmarks + labels_background
+    # else:
+    #     if labels_background := parse_toc(background_toc_frame):
+    #         background_count = len(labels_background)
+    #         background_page = labels_background[0]["page"]
+    #     if labels_rules := parse_toc(rules_toc_frame):
+    #         rules_count = len(labels_rules)
+    #         rules_page = labels_rules[0]["page"]
+        
+    #     labels = custom_bookmarks + [{"level":0, "label":"Background", "page":background_page, "children":background_count}] + labels_background + [{"level":0, "label":"Rules", "page":rules_page, "children":rules_count}] + labels_rules
+    # return lookup_labels(labels)
+    
+
 def process_pdf(input): # parse TOC and create bookmarks
 
     sla = SLAFile(input)
@@ -109,9 +146,9 @@ def process_pdf(input): # parse TOC and create bookmarks
                 shutil.copy(original_pdf,new_pdf)
                 files.append(new_pdf)
                 if f in ["full","nopoints"]:
-                    add_bookmarks(new_pdf,full_bookmarks)
+                    add_bookmarks_to_pdf(new_pdf,full_bookmarks)
                 else:
-                    add_bookmarks(new_pdf,norules_bookmarks)
+                    add_bookmarks_to_pdf(new_pdf,norules_bookmarks)
     if "print" in args.quality:
         # no need for bookmarks in print version
         pass
