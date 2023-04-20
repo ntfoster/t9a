@@ -209,7 +209,7 @@ class SLAFile:
             str: Value of the Variable Text mark
         """
         try:
-            return self.root.find(f"./DOCUMENT/Marks/Mark[@label='{label}']").get('str')
+            return self.root.find(f'./DOCUMENT/Marks/Mark[@label="{label}"]').get('str')
         except:
             raise InvalidMarkError(f"{label} is not a valid Mark")
     
