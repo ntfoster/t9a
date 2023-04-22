@@ -17,13 +17,38 @@ from t9a import T9A_ICON
 SETTINGS_FILE = Path(__file__).parent / "lab_manager/t9a_lab_manager_settings.json"
 CURRENT_LABS = ["ID", "WDG", "DL", "UD", "SE"]
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 async def compare_rules(pdf1, pdf2):
     return await asyncio.run(match_titles(pdf1, pdf2))
 
 # TODO: Check number of rules frames against PDF page count to see if manual changes needed
+
+
+def get_sla_files(file_list: list[str]=None):
+    """Returns a list of current .sla files for the Full Army Books, based on the list in the LAB Manager
+
+    Args:
+        file_list ([str], optional): List of Army Book intiials to get. Defaults to all current Army Books
+
+    Raises:
+        FileNotFoundError: If settings file for the LAB manager can't be found
+
+    Returns:
+        [str]: list of .sla file paths
+    """
+    if not Path(SETTINGS_FILE).is_file():
+        raise FileNotFoundError(f"Couldn't find {SETTINGS_FILE}")
+    if file_list is None:
+        file_list = [CURRENT_LABS]
+    with open(SETTINGS_FILE) as json_file:
+        settings = json.load(json_file)
+        sla_files = []
+        for lab in settings['labs']:
+                if lab['name'] in CURRENT_LABS:
+                    sla_files.append(lab['filename'])
+        return sla_files
 
 
 def copy_file(file: Path, directory: Path):
@@ -419,5 +444,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
 
     window.close()
 
+if __name__ == "__main__":
+    main() 
 
-main()
