@@ -26,7 +26,7 @@ import shutil
 from pathlib import Path
 import logging
 
-log_path = Path(scribus.getDocName()).parent/f'export {datetime.datetime.now().strftime("%Y-%m-%d %H%M%S") }.log'
+# log_path = Path(scribus.getDocName()).parent/f'export {datetime.datetime.now().strftime("%Y-%m-%d %H%M%S") }.log'
 log_path = Path(scribus.getDocName()).parent/'export.log' 
 logging.basicConfig(
      filename=log_path,
