@@ -481,8 +481,9 @@ class ScribusLAB:
         # group = scribus.groupObjects(background_links)
         # scribus.setItemName("background_links", group)
         rules_links = self.create_hyperlinks(RULES_TOC_FRAME, 'rh')
-        group = scribus.groupObjects(rules_links)
-        scribus.setItemName("rules_links", group)
+        if rules_links:
+            group = scribus.groupObjects(rules_links)
+            scribus.setItemName("rules_links", group)
         scribus.setActiveLayer(current_layer)
         scribus.docChanged(True)
 
