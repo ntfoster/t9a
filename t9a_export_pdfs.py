@@ -32,7 +32,7 @@ logging.basicConfig(
      filename=log_path,
      level=logging.DEBUG, 
      format= '[%(asctime)s] %(levelname)s - %(message)s',
-     datefmt='%H:%M:%S'
+     datefmt='%Y-%m-%d %H:%M:%S'
  )
 
 QUALITY_TYPES = ["high","low","print"]
@@ -324,6 +324,7 @@ def export_pdfs(formats,qualities):
     global no_export
 
     filename = scribus.getDocName()
+    logging.info(f"*** Exporting file: {filename}")
     version_number = scribus.getAllText("version_number")
 
     # set version name from variables
