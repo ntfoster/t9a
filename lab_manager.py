@@ -9,7 +9,7 @@ from xml.etree.ElementTree import ParseError
 
 import PySimpleGUI as sg
 
-from t9a.pdf import get_version_from_PDF, match_titles, export_titles_to_json
+from t9a.pdf import get_version_from_PDF, match_headings, export_titles_to_json, get_pages
 from t9a.sla import SLAFile
 from t9a import T9A_ICON
 
@@ -17,11 +17,20 @@ from t9a import T9A_ICON
 SETTINGS_FILE = Path(__file__).parent / "lab_manager/t9a_lab_manager_settings.json"
 CURRENT_LABS = ["ID", "WDG", "DL", "UD", "SE"]
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
-async def compare_rules(pdf1, pdf2):
-    return await asyncio.run(match_titles(pdf1, pdf2))
+def compare_rules(pdf1, pdf2):
+    pdf1_pagecount = get_pages(pdf1)
+    pdf2_pagecount = get_pages(pdf2)
+    pagecount_match = pdf1_pagecount==pdf2_pagecount
+    heading_match = match_headings(pdf1, pdf2)
+    pagecount_message = f"Match: {pdf1_pagecount}" if pagecount_match else f"Do not match: {pdf1_pagecount} vs {pdf2_pagecount}"
+    heading_message = "Match" if heading_match else "Do not match"
+    sg.popup_ok(f"Page counts:\t{pagecount_message}\n\nHeadings:\t{heading_message}")
+    
+    return pagecount_match and heading_match
+    
 
 # TODO: Check number of rules frames against PDF page count to see if manual changes needed
 
@@ -88,7 +97,7 @@ def open_scribus(filename=None):
                     title="Couldn't launch Scribus")
 
 
-def main():  # sourcery skip: use-fstring-for-concatenation
+def main():
     sg.theme('Dark Blue 14')
     settings = get_settings()
     lab_list = [[lab['name'], lab['filename']] for lab in settings['labs']]
@@ -314,7 +323,6 @@ def main():  # sourcery skip: use-fstring-for-concatenation
     while True:
         event, values = window.read()
         match event:
-
             case "Exit" | sg.WIN_CLOSED:
                 break
 
@@ -353,31 +361,32 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 if not filename or not new_pdf:
                     window['-RESULT-'].update("No file selected")
                     continue
-                window['-RESULT-'].update("Matching...")
+                window['-RESULT-'].update('', background_color="grey")
 
                 try:
                     # TODO: parrallelise
-                    match = match_titles(rules_pdf, new_pdf)
+                    match = compare_rules(rules_pdf, new_pdf)
                     if match:
                         window['-RESULT-'].update(
-                            'Titles match!',
+                            'Match',
                             text_color="white",
                             background_color="green",
                         )
 
                     else:
                         window['-RESULT-'].update(
-                            'Titles do not match!',
+                            'No match',
                             text_color="white",
                             background_color="red",
                         )
 
-                except:
+                except Exception as err:
+                    logging.error(err)
                     window['-RESULT-'].update('ERROR')
 
             case "-REPLACE-":
                 # nopoints = os.path.splitext(new_pdf)[0] + '_nopoints.pdf'
-                nopoints = new_pdf.parent / (new_pdf.stem + '_nopoints.pdf')
+                nopoints = new_pdf.parent / f'{new_pdf.stem}_nopoints.pdf'
                 new_pdf = copy_file(new_pdf, filename.parent / 'images')
                 logging.debug(f"checking for nopoints version: {nopoints}")
                 if nopoints.is_file():
@@ -418,7 +427,8 @@ def main():  # sourcery skip: use-fstring-for-concatenation
             case "-OPEN-SCRIBUS-":
                 filename = Path(values["-FILE-"])
                 logging.debug(f"opening {filename} in Scribus")
-                open_scribus(filename)
+                # open_scribus(filename)
+                subprocess.Popen([filename],shell=True)
 
             case "-EXPORT-MENU-":
                 export_menu()
@@ -431,14 +441,16 @@ def main():  # sourcery skip: use-fstring-for-concatenation
                 #     json_file = None
                 json_file = rules_pdf.with_suffix(".json")
                 logging.debug(f"Creating JSON file: {json_file}")
-                export_titles_to_json(rules_pdf,json_file)
+                export_titles_to_json(rules_pdf, json_file)
                 window["-OLD-VERSION-"].update("Exported")
 
             case "-CHECK-SLA-":
                 missing_frames = lab.test_frames()
                 missing_styles = lab.test_styles()
                 if missing_frames or missing_styles:
-                    sg.popup_ok(f"Missing Frames: {missing_frames}\n\nMissing Styles: {missing_styles}")
+                    sg.popup_ok(
+                        f"Missing Frames: {missing_frames}\n\nMissing Styles: {missing_styles}"
+                    )
                 else:
                     sg.popup_ok("All expected frames and styles are present.")
 
