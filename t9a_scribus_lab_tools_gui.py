@@ -60,9 +60,8 @@ class HelperMenu:
                 style="Default.TLabel", anchor="center"
             )
             status_labels.append(label)
-            command = lambda script=button[1], i=i: self.run_script(
-                script, status_labels[i]
-            )
+            def command(script=button[1], i=i):
+                return self.run_script(script, status_labels[i])
             ttk.Button(helpers, text=button[0], width=30, command=command
                        ).grid(column=0, row=i + 1, sticky="EW")
             label.grid(column=1, row=i + 1, padx=5, sticky="E")
