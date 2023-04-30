@@ -22,44 +22,22 @@ options = {}
 
 logging.basicConfig(level=logging.INFO)
 
-
 def export_menu():
-    # TODO: replace tk with ttk for better looking widgets
-
-    lab = ScribusLAB()
-
     # create root window
     root = tk.Tk()
     root.eval('tk::PlaceWindow . center')
-
-    # root window title and dimension
     root.title("T9A LAB Tools")
 
-    w = root.winfo_reqwidth()
-    h = root.winfo_reqheight()
-    # get screen width and height
-    ws = root.winfo_screenwidth()  # width of the screen
-    hs = root.winfo_screenheight()  # height of the screen
+    style = ttk.Style(root)
+    style.configure("OK.TLabel", background="pale green", foreground="dark green", padding=2, relief="solid", borderwidth=1)
+    style.configure("Default.TLabel", padding=2, relief="solid", borderwidth=1)
+    style.configure("Error.TLabel", background="pink1", foreground="maroon", padding=2, relief="solid", borderwidth=1)
+    style.configure("Warn.TButton", background="red", foreground="red")
 
-    # calculate x and y coordinates for the Tk root window
-    x = (ws / 2) - (w / 2)
-    y = (hs / 2) - (h / 2)
-
-    # set the dimensions of the screen
-    # and where it is placed
-    # root.geometry("%dx%d+%d+%d" % (w, h, x, y))
-    # root.geometry("+%d+%d" % (x, y))
-    # frame = Frame(root)
-    # frame.grid(column=0,row=0)
-
-    helpers = tk.LabelFrame(
-        root, text="Helpers", bd=2, relief=tk.GROOVE, padx=10, pady=10
-    )
-    helpers.grid(padx=5,pady=5, sticky="EW")
+    lab = ScribusLAB()
 
     def set_rules_headers():
         rules_pdf = Path(lab.get_embedded_rules())
-        # json_file = rules.parents[1] / Path(rules.name).with_suffix(".json")
         json_file = rules_pdf.with_suffix(".json")
         if not Path(json_file).is_file():
             scribus.messageBox("Couldn't find JSON file",f"Couldn't find {json_file}. Please run get_rules_json.py externally and try again")
@@ -80,9 +58,11 @@ def export_menu():
     def run_script(method,status):
         try:
             method()
-            status.set("Done")
+            status.configure(text="OK")
+            status.configure(style="OK.TLabel")
         except Exception as err:
-            status.set("Error")
+            status.configure(text="Error")
+            status.configure(style="Error.TLabel")
             scribus.messageBox("Error",err)
 
     def replace_rules():
@@ -91,114 +71,8 @@ def export_menu():
                 "Select slim rules PDF", "PDF Files (*.pdf)", "", haspreview=True)
             if new_pdf:
                 lab.replace_pdf(new_pdf)
-                h6_var.set("Done")
         except Exception as err:
-            h6_var.set("Error")
-            scribus.messageBox("Error", err)
-
-    h1_var = tk.StringVar()
-    h1_var.set("")
-    h2_var = tk.StringVar()
-    h2_var.set("")
-    h3_var = tk.StringVar()
-    h3_var.set("")
-    h4_var = tk.StringVar()
-    h4_var.set("")
-    h5_var = tk.StringVar()
-    h5_var.set("")
-    h6_var = tk.StringVar()
-    h6_var.set("")
-
-    toc_background = tk.BooleanVar()
-    toc_rules = tk.BooleanVar()
-    toc_background.set(False)
-    toc_rules.set(True)
-
-
-
-    tocs = tk.Frame(helpers)
-    tocs.grid(column=0,row=0,sticky="EW")
-
-    tk.Checkbutton(tocs, text="BG", variable=toc_background, ).pack(side=tk.LEFT)
-    tk.Checkbutton(tocs, text="Rules", variable=toc_rules, ).pack(side=tk.LEFT)
-
-    tk.Button(helpers, text="Create Table of Contents", width=20,
-              command=lambda: run_script(create_toc,h1_var)
-              ).grid(column=0, row=1, sticky="EW")
-    tk.Button(helpers, text="Create ToC Hyperlinks", width=20, 
-              command=lambda: run_script(lab.create_toc_hyperlinks,h2_var),
-              ).grid(column=0, row=2, sticky="EW")
-    tk.Button(helpers, text="Set Footers", width=20, 
-              command=lambda: run_script(lab.set_footers,h3_var)
-              ).grid(column=0, row=3, sticky="EW")
-    tk.Button(helpers, text="Add rules headers", width=20, 
-              command=lambda: run_script(set_rules_headers,h4_var)
-              ).grid(column=0, row=4, sticky="EW")
-    tk.Button(helpers, text="Replace rules PDF", width=20, 
-              command=lambda: run_script(replace_rules,h5_var)
-              ).grid(column=0, row=5, sticky="EW")
-
-    h1_status = tk.Label(helpers, textvariable=h1_var).grid(
-        column=1, row=1, padx=5, sticky="E")
-    h2_status = tk.Label(helpers, textvariable=h2_var).grid(
-        column=1, row=2, padx=5, sticky="E")
-    h3_status = tk.Label(helpers, textvariable=h3_var).grid(
-        column=1, row=3, padx=5, sticky="E")
-    h4_status = tk.Label(helpers, textvariable=h4_var).grid(
-        column=1, row=4, padx=5, sticky="E")
-    h5_status = tk.Label(helpers, textvariable=h5_var).grid(
-        column=1, row=5, padx=5, sticky="E")
-    # h6_status = tk.Label(helpers, textvariable=h6_var).grid(
-    #     column=1, row=5, padx=5, sticky="E")
-
-
-    export_options = tk.LabelFrame(
-        root, text="Export", bd=2, relief=tk.GROOVE, padx=10, pady=10
-    )
-    export_options.grid(column=0,row=1,padx=5,pady=5)
-
-    quality = tk.LabelFrame(
-        export_options, text="Quality", bd=2, relief=tk.GROOVE, padx=10, pady=10
-    )
-    quality.grid(column=0,row=0)
-
-    high = tk.BooleanVar()
-    low = tk.BooleanVar()
-    # printq = BooleanVar()
-
-    high.set(True)
-    low.set(True)
-    # printq.set(False)
-
-    # tk.Checkbutton(quality, text="High", variable=high).grid(column=0,row=0)
-    # tk.Checkbutton(quality, text="Low", variable=low).grid(column=0,row=1)
-    # tk.Checkbutton(quality, text="Print", state=tk.DISABLED).grid(column=0,row=2)
-
-    tk.Checkbutton(quality, text="High", variable=high, ).pack(anchor="w")
-    tk.Checkbutton(quality, text="Low", variable=low,).pack(anchor="w")
-    tk.Checkbutton(quality, text="Print", state=tk.DISABLED).pack(anchor="w")
-
-    formats = tk.LabelFrame(
-        export_options, text="Format", bd=2, relief=tk.GROOVE, padx=10, pady=10
-    )
-    formats.grid(column=1, row=0)
-
-    full = tk.BooleanVar()
-    nopoints = tk.BooleanVar()
-    norules = tk.BooleanVar()
-
-    full.set(True)
-    nopoints.set(True)
-    norules.set(False)
-
-    tk.Checkbutton(formats, text="Full", variable=full).pack(anchor="w")
-    tk.Checkbutton(formats, text="No Points",
-                   variable=nopoints).pack(anchor="w")
-    tk.Checkbutton(formats, text="Background Only",
-                   variable=norules).pack(anchor="w")
-
-    buttons = tk.Frame(root)
-    buttons.grid(column=0, row=2, sticky="EW",padx=10,pady=10)
+            raise err
 
     def export():
         global options
@@ -232,13 +106,82 @@ def export_menu():
                 message="You must select at least one option from both Quality and Format",
             )
 
-    # export_buttons = tk.Frame(export_options)
-    # export_buttons.grid(column=0,row=1,columnspan=2,sticky="EW",pady=5)
+    ##############
+    ### LAYOUT ###
+    ##############
+    helpers = ttk.LabelFrame(
+        root, text="Helpers", padding=5)
+    helpers.grid(padx=10,pady=10, sticky="EW")
 
-    tk.Button(buttons, text="Export", fg="Red",
-              command=export).pack(side=tk.RIGHT)
+    toc_background = tk.BooleanVar(value=False)
+    toc_rules = tk.BooleanVar(value=True)
 
-    tk.Button(buttons, text="Done", command=root.destroy).pack(side=tk.LEFT)
+    buttons = [ # List of button name and functions
+        ("Create Table of Contents", create_toc),
+        ("Create ToC Hyperlinks", lab.create_toc_hyperlinks),
+        ("Set Footers", lab.set_footers),
+        ("Add rules headers", set_rules_headers),
+        ("Replace rules PDF", replace_rules),
+    ]
+
+    tocs = ttk.Frame(helpers)
+    tocs.grid(column=0,row=0,sticky="EW")
+
+    ttk.Checkbutton(tocs, text="BG", variable=toc_background, ).pack(side=tk.LEFT)
+    ttk.Checkbutton(tocs, text="Rules", variable=toc_rules, ).pack(side=tk.LEFT)
+
+    button_frame = ttk.Frame(helpers,padx=5)
+    labels = []
+    for i, button in enumerate(buttons):
+        label = ttk.Label(helpers, text="Ready", width=10, style="Default.TLabel", anchor="center")
+        labels.append(label)
+        command = lambda script=button[1], i=i: run_script(script,labels[i])
+        ttk.Button(helpers, text=button[0], width=30,
+                   command=command
+                   ).grid(column=0, row=i+1, sticky="EW")
+        label.grid(column=1, row=i+1, padx=5, sticky="E")
+
+    export_options = ttk.LabelFrame(
+        root, text="Export", padding=10
+    )
+    export_options.grid(column=0,row=1,padx=10,sticky="EW")
+
+    quality = ttk.LabelFrame(
+        export_options, text="Quality", padding=5
+    )
+    quality.grid(column=0,row=0, sticky="EW")
+
+    high = tk.BooleanVar(value=True)
+    low = tk.BooleanVar(value=True)
+    printq = tk.BooleanVar(value=False)
+    ttk.Checkbutton(quality, text="High", variable=high, 
+                    ).pack(anchor="w")
+    ttk.Checkbutton(quality, text="Low", variable=low,
+                    ).pack(anchor="w")
+    ttk.Checkbutton(quality, text="Print", variable=printq, state=tk.DISABLED
+                    ).pack(anchor="w")
+
+    formats = ttk.LabelFrame(export_options, text="Format", padding=5)
+    formats.grid(column=1, row=0, padx=10, sticky="EW")
+
+    full = tk.BooleanVar(value=True)
+    nopoints = tk.BooleanVar(value=True)
+    norules = tk.BooleanVar(value=False)
+    ttk.Checkbutton(formats, text="Full", variable=full
+                    ).pack(anchor="w")
+    ttk.Checkbutton(formats, text="No Points", variable=nopoints
+                    ).pack(anchor="w")
+    ttk.Checkbutton(formats, text="Background Only", variable=norules
+                    ).pack(anchor="w")
+
+    ttk.Button(export_options, text="Export", style="Warn.TButton", command=export
+               ).grid(column=0, row=1, pady=5, sticky = tk.W)
+
+    buttons = ttk.Frame(root)
+    buttons.grid(column=0, row=2, sticky="EW", padx=10, pady=10)
+
+    ttk.Button(buttons, text="OK", command=root.destroy
+               ).pack()
 
     root.mainloop()
 
