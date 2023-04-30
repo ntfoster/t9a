@@ -153,10 +153,21 @@ class ScribusLAB:
         scribus.docChanged(True)
 
 
+    # def get_rules_pages(self):
+    #     rules_start = int(scribus.getAllText("rules_start"))
+    #     rules_end = int(scribus.getAllText("rules_end"))
+    #     return(rules_start,rules_end)
+    
     def get_rules_pages(self):
-        rules_start = int(scribus.getAllText("rules_start"))
-        rules_end = int(scribus.getAllText("rules_end"))
-        return(rules_start,rules_end)
+        rules_pages = []
+        for page in range(7,scribus.pageCount()):
+            for item in scribus.getAllObjects(type=scribus.ITEMTYPE_IMAGEFRAME, page=page, layer="Rules"):
+                # print(scribus.getImageFile(item))
+                if scribus.getImageFile(item)[-4:] == ".pdf":
+                    rules_pages.append(page+1)
+                    self.rules_start = rules_pages[0]
+                    self.rules_end = rules_pages[-1]+1
+        return (self.rules_start,self.rules_end)
 
     def get_embedded_rules(self):
         items = scribus.getAllObjects(

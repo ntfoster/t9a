@@ -2,6 +2,7 @@
 import re
 import os
 import json
+import logging
 from pathlib import Path
 
 from pypdf import PdfWriter, PdfReader
@@ -15,12 +16,28 @@ FONT_MAPPING = {
 }
 
 
+def get_pages(filename):
+    with open(filename, 'rb+') as pdf_file:
+        pdf = PdfReader(pdf_file)
+        return len(pdf.pages)
+
+
 def parse_title(text):
     return re.sub(r' \(.+\)', '', text)
     # return text
 
 
-def get_titles(filename,details=False):
+def get_headings(filename, details=False, dump_json: bool = True):
+    # TODO: check modified date on json v PDF to make sure it's up to date
+    json_file = Path(filename).with_suffix(".json")
+    if not Path(json_file).is_file():
+        return parse_headings(filename, details, dump_json)
+    with open(json_file) as json_content:
+        return json.load(json_content)
+
+
+def parse_headings(filename, details, dump_json):
+    logging.info(f"Parsing {filename}")
     doc = load_file(filename, font_mapping=FONT_MAPPING, font_mapping_is_regex=True)
     titles = doc.elements.filter_by_font("chapter_title")
     entries = []
@@ -35,6 +52,12 @@ def get_titles(filename,details=False):
             if details:
                 entry['ypos'] = item.bounding_box.y1
             entries.append(entry)
+    logging.info(entries)
+    if dump_json:
+        json_file = Path(filename).with_suffix(".json")
+        with open(json_file,"w") as outfile:
+            json.dump(entries,outfile,indent=4)
+
     return entries
 
 
@@ -48,7 +71,7 @@ def export_titles_to_json(pdf_file: str, json_file: str = ""):
     Returns:
         List of dictionaries of parsed titles
     """
-    titles = get_titles(pdf_file,details=True)
+    titles = get_headings(pdf_file,details=True)
     pdf_file = Path(pdf_file)
     if not json_file:
         json_file = Path(pdf_file).with_suffix('.json')
@@ -57,17 +80,22 @@ def export_titles_to_json(pdf_file: str, json_file: str = ""):
     return titles
 
 
-def match_titles(pdf1, pdf2,details=False):
-    pdf1_titles = get_titles(pdf1,details)
-    pdf2_titles = get_titles(pdf2,details)
+def match_headings(pdf1, pdf2,details=False):
+    pdf1_titles = get_headings(pdf1,details)
+    logging.info(pdf1_titles)
+    pdf2_titles = get_headings(pdf2,details)
+    logging.info(pdf2_titles)
     return pdf1_titles == pdf2_titles
 
 
 def compare_pdfs(pdf1, pdf2,details=False):
-    pdf1_titles = get_titles(pdf1,details)
-    pdf2_titles = get_titles(pdf2,details)
-    print(pdf1_titles, tablefmt="simple")
-    print(pdf2_titles, tablefmt="simple")
+    pdf1_pagecout = get_pages(pdf1)
+    pdf2_pagecount = get_pages(pdf2)
+
+    pdf1_titles = get_headings(pdf1,details)
+    pdf2_titles = get_headings(pdf2,details)
+    print(pdf1_titles)
+    print(pdf2_titles)
     if pdf1_titles == pdf2_titles:
         print("Conents match!")
     else:
