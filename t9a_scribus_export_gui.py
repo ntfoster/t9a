@@ -99,7 +99,6 @@ class ExportMenu:
 
         if formats and qualities:
             options = {"formats": formats, "qualities": qualities}
-            # return options
             self.root.destroy()
             export_pdfs(options["formats"], options["qualities"])
         else:
@@ -122,7 +121,12 @@ def main():
         relief="solid",
         borderwidth=1,
     )
-    style.configure("Default.TLabel", padding=2, relief="solid", borderwidth=1)
+    style.configure(
+        "Default.TLabel",
+        padding=2,
+        relief="solid",
+        borderwidth=1,
+    )
     style.configure(
         "Error.TLabel",
         background="pink1",
@@ -131,7 +135,11 @@ def main():
         relief="solid",
         borderwidth=1,
     )
-    style.configure("Warn.TButton", background="pink1", foreground="red")
+    style.configure(
+        "Warn.TButton",
+        background="IndianRed1",
+        foreground="red4",
+    )
 
     options = {}
     ExportMenu(root, options)

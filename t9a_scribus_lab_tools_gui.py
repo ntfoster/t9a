@@ -152,7 +152,12 @@ def main():
         relief="solid",
         borderwidth=1,
     )
-    style.configure("Default.TLabel", padding=2, relief="solid", borderwidth=1)
+    style.configure(
+        "Default.TLabel",
+        padding=2,
+        relief="solid",
+        borderwidth=1,
+    )
     style.configure(
         "Error.TLabel",
         background="pink1",
@@ -161,7 +166,11 @@ def main():
         relief="solid",
         borderwidth=1,
     )
-    style.configure("Warn.TButton", background="red", foreground="red")
+    style.configure(
+        "Warn.TButton",
+        background="IndianRed1",
+        foreground="red4",
+    )
 
     HelperMenu(root)
     root.mainloop()
