@@ -56,15 +56,23 @@ class HelperMenu:
         status_labels = []
         for i, button in enumerate(buttons):
             label = ttk.Label(
-                helpers, text="Ready", width=10,
-                style="Default.TLabel", anchor="center"
+                helpers, text="Ready", width=10, style="Default.TLabel", anchor="center"
             )
             status_labels.append(label)
+
             def command(script=button[1], i=i):
                 return self.run_script(script, status_labels[i])
-            ttk.Button(helpers, text=button[0], width=30, command=command
-                       ).grid(column=0, row=i + 1, sticky="EW")
+
+            ttk.Button(helpers, text=button[0], width=30, command=command).grid(
+                column=0, row=i + 1, sticky="EW"
+            )
             label.grid(column=1, row=i + 1, padx=5, sticky="E")
+
+        ttk.Label(
+            text="Scribus will not show the results of these functions\n\
+                  until you close this window",
+            anchor="w",
+        ).grid(row=1, padx=10, pady=10)
 
         buttons = ttk.Frame(root)
         buttons.grid(column=0, row=2, sticky="EW", padx=10, pady=10)
@@ -105,8 +113,7 @@ class HelperMenu:
         scribus.saveDoc()
 
     def create_toc(self):
-        self.lab.create_toc_from_sla(self.toc_background.get(),
-                                     self.toc_rules.get())
+        self.lab.create_toc_from_sla(self.toc_background.get(), self.toc_rules.get())
 
     def replace_rules(self):
         try:
@@ -114,7 +121,7 @@ class HelperMenu:
                 caption="Select slim rules PDF",
                 filter="PDF Files (*.pdf)",
                 defaultname="",
-                haspreview=True
+                haspreview=True,
             )
             if new_pdf:
                 self.lab.replace_pdf(new_pdf)
@@ -168,6 +175,7 @@ if __name__ == "__main__":
         main()
     else:
         scribus.messageBox(
-            "No file open", "You need to have a suitable file open to \
-                use this script"
+            "No file open",
+            "You need to have a suitable file open to \
+                use this script",
         )
