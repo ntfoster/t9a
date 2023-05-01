@@ -131,7 +131,7 @@ def main():
         relief="solid",
         borderwidth=1,
     )
-    style.configure("Warn.TButton", background="red", foreground="red")
+    style.configure("Warn.TButton", background="pink1", foreground="red")
 
     options = {}
     ExportMenu(root, options)
